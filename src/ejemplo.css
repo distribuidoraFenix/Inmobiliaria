@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* opciones de móvil personalizadas */
+  --breakpoint-mo-sm: 360px; /* Android común */
+  --breakpoint-mo-md: 390px; /* iPhone moderno estándar */
+  --breakpoint-mo-lg: 414px; /* Celulares grandes / Max */
+  --breakpoint-mo-xl: 500px; /* Celulares extra grandes */
+}
+
+/* Theme Light */
+:root{
+    /* Fondos */
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-secondary: #f1f5f9;
+
+  /* Textos */
+  --foreground: #0f172a;
+  --foreground-primary: #10b981;
+  --foreground-secondary: #0e235e;
+  --foreground-warning: #c74a18;
+  --foreground-muted: #244e8a;
+
+  /* Marca */
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --warning: #f59b13;
+  --warning-hover: #eab308;
+
+  /* UI */
+  --border: #e2e8f0;
+}
+
+/* Theme Dark */
+.dark{
+     /* Fondos */
+  --background: #020617;
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+
+  /* Textos */
+  --foreground: #f8fafc;
+  --foreground-secondary: #cbd5e1;
+  --foreground-muted: #94a3b8;
+  --foreground-warning: #c7b518;
+
+  /* Marca */
+  --primary: #34d399;
+  --primary-hover: #10b981;
+   --warning: #f59b13;
+  --warning-hover: #eab308;
+
+  /* UI */
+  --border: #334155;
+    
+}
+

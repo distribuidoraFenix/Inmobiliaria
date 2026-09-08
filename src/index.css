@@ -1,0 +1,18 @@
+
+@import "tailwindcss";
+@import "@fontsource/inter";
+
+@theme{
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light Theme (predeterminado) */ 
+:root{
+  --background: #f8fafc;
+}
+
+.dark{
+  --background: #181616;
+}
