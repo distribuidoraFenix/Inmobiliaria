@@ -2,9 +2,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import PropertyCard from "./components/PropertyCard";
 import PropertyDetail from "./components/PropertyDetail";
+import MiPerfil from "./components/MiPerfil";
+import RegistrarAgente from "./components/RegistrarAgente";
+import RutaAdmin from "./components/RutaAdmin"; // IMPORTAMOS EL ESCUDO PROTECTOR
 import { propiedadesIniciales } from "./data/propiedadesData";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import AuthForm from "./components/AuthForm";
 
-// Componente secundario para organizar el Catálogo Principal
 function HomeCatalog() {
   return (
     <main className="p-6 max-w-7xl mx-auto">
@@ -25,18 +29,49 @@ function HomeCatalog() {
   );
 }
 
-export default function App() {
+function AppContenido() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400 text-xs font-semibold">
+        Cargando aplicación...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm />;
+  }
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-zinc-950 text-white">
         <Navbar />
         <Routes>
-          {/* Ruta para el Catálogo principal */}
           <Route path="/" element={<HomeCatalog />} />
-          {/* Ruta Dinámica usando el parámetro :id */}
           <Route path="/propiedad/:id" element={<PropertyDetail />} />
+          <Route path="/perfil" element={<MiPerfil />} />
+
+          {/* RUTA PROTEGIDA CON EL ESCUDO ENVOLTORIO */}
+          <Route
+            path="/registrar-agente"
+            element={
+              <RutaAdmin>
+                <RegistrarAgente />
+              </RutaAdmin>
+            }
+          />
         </Routes>
       </div>
     </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContenido />
+    </AuthProvider>
   );
 }

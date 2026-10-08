@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 import {
   Menu,
   Home,
@@ -12,9 +14,20 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
+  const { logout, rol } = useAuth();
+
   // Estados para controlar la visibilidad de los menús desplegables
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState<boolean>(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsUserDropdownOpen(false);
+      await logout();
+    } catch (error) {
+      console.error("Error al intentar cerrar sesión:", error);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-zinc-900 border-b border-zinc-800 text-white select-none">
@@ -23,7 +36,7 @@ export default function Navbar() {
         <div className="flex items-center">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-2 rounded-lg hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             aria-label="Abrir menú de navegación"
           >
             {isMobileMenuOpen ? (
@@ -36,20 +49,20 @@ export default function Navbar() {
 
         {/* SECCIÓN CENTRAL: Icono de Casa Clicable */}
         <div className="flex items-center justify-center">
-          <a
-            href="/"
-            className="p-2 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-zinc-800 transition-all transform active:scale-95"
+          <Link
+            to="/"
+            className="p-2 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-zinc-800 transition-all transform active:scale-95 cursor-pointer"
             aria-label="Ir al inicio"
           >
             <Home className="w-6 h-6" />
-          </a>
+          </Link>
         </div>
 
         {/* SECCIÓN DERECHA: Notificaciones, Carrito y Usuario */}
         <div className="flex items-center gap-2">
           {/* Campana de Notificaciones */}
           <button
-            className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
+            className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative cursor-pointer"
             aria-label="Ver notificaciones"
           >
             <Bell className="w-5 h-5" />
@@ -58,7 +71,7 @@ export default function Navbar() {
 
           {/* Tema oscuro y claro */}
           <button
-            className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative"
+            className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors relative cursor-pointer"
             aria-label="cambiar de tema claro y oscuro"
           >
             <Moon className="w-5 h-5" />
@@ -68,7 +81,7 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
+              className={`p-2 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
                 isUserDropdownOpen
                   ? "bg-zinc-800 text-white"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
@@ -88,24 +101,27 @@ export default function Navbar() {
                 />
 
                 <div className="absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl py-1 z-20 transition-all">
-                  <a
-                    href="#perfil"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
+                  <Link
+                    to="/perfil"
+                    onClick={() => setIsUserDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
                   >
                     <Settings className="w-4 h-4 text-zinc-400" />
                     <span>Mi Perfil</span>
-                  </a>
+                  </Link>
+
                   <a
                     href="#password"
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
                   >
                     <Key className="w-4 h-4 text-zinc-400" />
                     <span>Cambiar Contraseña</span>
                   </a>
                   <hr className="border-zinc-700 my-1" />
+
                   <button
-                    onClick={() => alert("Cerrando sesión...")}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-400 hover:bg-zinc-700/50 transition-colors text-left"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-400 hover:bg-zinc-700/50 transition-colors text-left cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Cerrar Sesión</span>
@@ -131,7 +147,7 @@ export default function Navbar() {
               <span className="font-bold text-lg text-blue-400">Acciones</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1 rounded-md hover:bg-zinc-800"
+                className="p-1 rounded-md hover:bg-zinc-800 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -141,25 +157,25 @@ export default function Navbar() {
             <nav className="flex flex-col gap-1">
               <a
                 href="#alquiler"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 Alquiler
               </a>
               <a
                 href="#anticretico"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 Anticrético
               </a>
               <a
                 href="#venta"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 Venta
               </a>
               <a
                 href="#proyectos"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
               >
                 Pre-venta
               </a>
@@ -167,18 +183,35 @@ export default function Navbar() {
               <p className="pb-2 pt-2 border-b border-t border-zinc-800 mb-4 text-gray-500">
                 Registros
               </p>
-              <a
-                href="#propiedades"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
-              >
-                Registrar Propiedad
-              </a>
-              <a
-                href="#proyectos"
-                className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
-              >
-                Registrar Proyecto
-              </a>
+
+              {/* VISIBLE PARA AMBOS: Tanto admin como user tienen acceso a Registrar Propiedad */}
+              {(rol === "user" || rol === "admin") && (
+                <a
+                  href="#propiedades"
+                  className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
+                >
+                  Registrar Propiedad
+                </a>
+              )}
+
+              {/* EXCLUSIVO PARA ADMIN: Enlaces para Registrar Agente y Proyecto */}
+              {rol === "admin" && (
+                <>
+                  <Link
+                    to="/registrar-agente"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer block"
+                  >
+                    Registrar Agentes
+                  </Link>
+                  <a
+                    href="#registrar-proyecto"
+                    className="px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors cursor-pointer"
+                  >
+                    Registrar Proyecto
+                  </a>
+                </>
+              )}
             </nav>
           </div>
         </>
