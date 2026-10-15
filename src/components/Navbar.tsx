@@ -1,20 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
-import {
-  Menu,
-  Home,
-  Bell,
-  Moon,
-  User,
-  X,
-  LogOut,
-  Settings,
-  Key,
-} from "lucide-react";
+import { Menu, Home, Bell, Moon, X, LogOut, Settings, Key } from "lucide-react";
 
 export default function Navbar() {
-  const { logout, rol } = useAuth();
+  // Extraemos las propiedades necesarias de la sesión global de autenticación
+  // Nota: Si tu AuthContext no expone "perfil", usaremos los metadatos del "user"
+  const { logout, rol, user } = useAuth();
 
   // Estados para controlar la visibilidad de los menús desplegables
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -28,6 +20,15 @@ export default function Navbar() {
       console.error("Error al intentar cerrar sesión:", error);
     }
   };
+
+  // LÓGICA MULTIMEDIA PARA DETERMINAR EL ROSTRO DEL AGENTE CONECTADO
+  // Intentamos leer la foto desde los metadatos del usuario de la sesión de Supabase
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const nombreUsuario = user?.user_metadata?.nombres || "Agente";
+
+  const fotoPerfilSrc = avatarUrl
+    ? avatarUrl
+    : `https://dicebear.com{nombreUsuario}`;
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-zinc-900 border-b border-zinc-800 text-white select-none">
@@ -58,7 +59,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* SECCIÓN DERECHA: Notificaciones, Carrito y Usuario */}
+        {/* SECCIÓN DERECHA: Notificaciones, Tema y Fotografía del Usuario */}
         <div className="flex items-center gap-2">
           {/* Campana de Notificaciones */}
           <button
@@ -77,24 +78,28 @@ export default function Navbar() {
             <Moon className="w-5 h-5" />
           </button>
 
-          {/* Perfil de Usuario con Dropdown */}
+          {/* Perfil de Usuario con Dropdown (REEMPLAZADO EL ICONO POR TU FOTO DE PERFIL) */}
           <div className="relative">
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              className={`p-2 rounded-lg transition-colors flex items-center justify-center cursor-pointer ${
+              className={`size-9 rounded-full overflow-hidden border transition-all flex items-center justify-center cursor-pointer shrink-0 ${
                 isUserDropdownOpen
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  ? "border-blue-500 ring-2 ring-blue-500/20"
+                  : "border-zinc-700 hover:border-zinc-500"
               }`}
               aria-label="Menú de usuario"
             >
-              <User className="w-5 h-5" />
+              <img
+                src={fotoPerfilSrc}
+                alt={`Miniatura de ${nombreUsuario}`}
+                className="w-full h-full object-cover animate-fade-in"
+                loading="lazy"
+              />
             </button>
 
             {/* Dropdown flotante de Usuario */}
             {isUserDropdownOpen && (
               <>
-                {/* Capa invisible trasera para cerrar el menú al hacer clic afuera */}
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setIsUserDropdownOpen(false)}
@@ -136,7 +141,6 @@ export default function Navbar() {
       {/* MENÚ LATERAL DESPLEGABLE (Mobile First) */}
       {isMobileMenuOpen && (
         <>
-          {/* Fondo oscuro traslúcido para enfocar el menú */}
           <div
             className="fixed inset-0 bg-black/50 z-30"
             onClick={() => setIsMobileMenuOpen(false)}
@@ -153,7 +157,6 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Opciones del menú móvil */}
             <nav className="flex flex-col gap-1">
               <a
                 href="#alquiler"
@@ -184,7 +187,6 @@ export default function Navbar() {
                 Registros
               </p>
 
-              {/* VISIBLE PARA AMBOS: Tanto admin como user tienen acceso a Registrar Propiedad */}
               {(rol === "user" || rol === "admin") && (
                 <a
                   href="#propiedades"
@@ -194,7 +196,6 @@ export default function Navbar() {
                 </a>
               )}
 
-              {/* EXCLUSIVO PARA ADMIN: Enlaces para Registrar Agente y Proyecto */}
               {rol === "admin" && (
                 <>
                   <Link

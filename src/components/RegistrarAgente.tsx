@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Mail,
   Lock,
+  Camera,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -40,13 +41,36 @@ export default function RegistrarAgente() {
   const [telefonoReferenciaDos, setTelefonoReferenciaDos] = useState("");
   const [fechaIngreso, setFechaIngreso] = useState("");
 
+  // NUEVO ESTADO: Guarda el archivo de imagen de perfil seleccionado para el nuevo agente
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
     try {
-      // 1. Crear el usuario en el Auth de Supabase (Pasándole el ROL en los metadatos al Trigger)
+      let urlPublicaAvatar = null;
+
+      // 1. Si el administrador seleccionó una fotografía para el agente, la subimos al Storage
+      if (avatarFile) {
+        const extensionArchivo = avatarFile.name.split(".").pop();
+        const nombreUnico = `${Date.now()}_agente_avatar.${extensionArchivo}`;
+
+        const { error: errorSubida } = await supabase.storage
+          .from("avatares")
+          .upload(nombreUnico, avatarFile);
+
+        if (errorSubida) throw errorSubida;
+
+        const { data: dataUrl } = supabase.storage
+          .from("avatares")
+          .getPublicUrl(nombreUnico);
+
+        urlPublicaAvatar = dataUrl.publicUrl;
+      }
+
+      // 2. Crear el usuario en el Auth de Supabase (Pasándole el ROL y el AVATAR en la metadata para el Trigger)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -58,6 +82,7 @@ export default function RegistrarAgente() {
             fecha_nacimiento: fechaNacimiento,
             telefono_personal: telefonoPersonal,
             departamento,
+            avatar_url: urlPublicaAvatar, // Se inyecta directamente a través de la metadata leída por el nuevo Trigger
           },
         },
       });
@@ -68,11 +93,10 @@ export default function RegistrarAgente() {
           "No se pudo obtener la información del usuario creado.",
         );
 
-      // 2. Actualizar el perfil recién creado por el Trigger con el resto de datos extendidos y el ROL elegido
+      // 3. Actualizar el perfil recién creado por el Trigger con el resto de datos complementarios extendidos
       const { error: perfilError } = await supabase
         .from("perfiles")
         .update({
-          rol,
           apellido_materno: apellidoMaterno || null,
           telefono_corporativo: telefonoCorporativo || null,
           direccion: direccion || null,
@@ -82,7 +106,7 @@ export default function RegistrarAgente() {
           telefono_referencia_dos: telefonoReferenciaDos || null,
           fecha_ingreso: fechaIngreso
             ? fechaIngreso
-            : new Date().toISOString().split("T")[0],
+            : new Date().toISOString().split("T"),
         })
         .eq("id", authData.user.id);
 
@@ -90,10 +114,10 @@ export default function RegistrarAgente() {
 
       setMessage({
         type: "success",
-        text: `¡Agente registrado con éxito con el rol de ${rol.toUpperCase()}! Se ha enviado un correo de confirmación a su cuenta.`,
+        text: `¡Agente registrado con éxito con el rol de ${rol.toUpperCase()}! Los datos y su fotografía han quedado inyectados.`,
       });
 
-      // Limpiar Formulario
+      // Limpiar Formulario completo
       resetearestados();
     } catch (err: any) {
       console.error(err);
@@ -123,8 +147,8 @@ export default function RegistrarAgente() {
     setTelefonoReferencia("");
     setTelefonoReferenciaDos("");
     setFechaIngreso("");
+    setAvatarFile(null);
   };
-
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
       {/* ENCABEZADO Y VOLVER */}
@@ -146,7 +170,7 @@ export default function RegistrarAgente() {
         </div>
       </div>
 
-      {/* MENSAGES DE ÉXITO O ERROR */}
+      {/* MENSAJES DE ÉXITO O ERROR */}
       {message && (
         <div
           className={`p-4 rounded-xl text-xs font-semibold mb-6 border flex items-start gap-3 ${
@@ -165,11 +189,42 @@ export default function RegistrarAgente() {
         onSubmit={handleSubmit}
         className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-6"
       >
-        {/* SECCIÓN 1: CREDENCIALES DE ACCESO */}
+        {/* SECCIÓN 1: CREDENCIALES DE ACCESO Y FOTO */}
         <div className="space-y-4">
           <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest border-b border-zinc-800 pb-2">
-            1. Credenciales de la Cuenta
+            1. Credenciales de la Cuenta & Foto
           </h3>
+
+          {/* Selector de Fotografía de Perfil del Agente */}
+          <div className="mb-4">
+            <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+              Fotografía del Asesor (Opcional)
+            </label>
+            <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950/50 rounded-xl cursor-pointer transition-colors p-2">
+              <div className="flex items-center gap-3">
+                <Camera className="size-5 text-zinc-500" />
+                <div className="text-left">
+                  <p className="text-[11px] font-medium text-zinc-300">
+                    {avatarFile
+                      ? avatarFile.name
+                      : "Seleccionar foto del nuevo agente"}
+                  </p>
+                  <p className="text-[9px] text-zinc-500">JPG, PNG (Máx 2MB)</p>
+                </div>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setAvatarFile(e.target.files[0]);
+                  }
+                }}
+              />
+            </label>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
@@ -224,6 +279,7 @@ export default function RegistrarAgente() {
             </div>
           </div>
         </div>
+
         {/* SECCIÓN 2: DATOS PERSONALES */}
         <div className="space-y-4">
           <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest border-b border-zinc-800 pb-2">

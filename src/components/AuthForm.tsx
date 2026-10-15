@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { supabase } from "../lib/supabaseClient"; // Ajusta la ruta según tu estructura
+import { supabase } from "../lib/supabaseClient";
 import {
   Eye,
   EyeOff,
@@ -10,6 +10,7 @@ import {
   Calendar,
   MapPin,
   Loader2,
+  Camera, // Importamos el icono para el selector multimedia
 } from "lucide-react";
 
 export default function AuthForm() {
@@ -30,6 +31,9 @@ export default function AuthForm() {
   const [telefonoPersonal, setTelefonoPersonal] = useState("");
   const [departamento, setDepartamento] = useState("");
 
+  // NUEVO ESTADO: Guarda el archivo de imagen de perfil seleccionado
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -44,28 +48,55 @@ export default function AuthForm() {
         });
         if (error) throw error;
         setMessage({ type: "success", text: "¡Sesión iniciada con éxito!" });
-        // Aquí puedes redirigir usando react-router-dom si lo deseas
       } else {
-        // --- PROCESO DE REGISTRO PÚBLICO ---
+        // --- PROCESO DE REGISTRO PÚBLICO OPCIONAL EN IMÁGENES ---
+        let urlPublicaAvatar = null;
+
+        // 1. Si el usuario SELECCIONÓ una fotografía, la subimos a la nube
+        if (avatarFile) {
+          // Creamos un nombre único limpio basado en milisegundos para evitar que se pisen los archivos
+          const extensionArchivo = avatarFile.name.split(".").pop();
+          const nombreUnico = `${Date.now()}_avatar.${extensionArchivo}`;
+
+          const { error: errorSubida } = await supabase.storage
+            .from("avatares")
+            .upload(nombreUnico, avatarFile);
+
+          if (errorSubida) throw errorSubida;
+
+          // Extraemos la URL pública del archivo recién guardado en Supabase Storage
+          const { data: dataUrl } = supabase.storage
+            .from("avatares")
+            .getPublicUrl(nombreUnico);
+
+          urlPublicaAvatar = dataUrl.publicUrl;
+        }
+
+        // 2. Ejecutamos el registro inyectando la URL (ya sea el string o null) en los metadatos
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            // Pasamos los metadatos exactos que el TRIGGER de la BD espera recibir
             data: {
               nombres,
               apellido_paterno: apellidoPaterno,
               fecha_nacimiento: fechaNacimiento,
               telefono_personal: telefonoPersonal,
               departamento,
+              avatar_url: urlPublicaAvatar, // Se mapeará automáticamente mediante el trigger
             },
           },
         });
+
         if (error) throw error;
+
         setMessage({
           type: "success",
           text: "¡Registro exitoso! Por favor, revisa tu correo electrónico para confirmar tu cuenta.",
         });
+
+        // Limpiamos el archivo temporal
+        setAvatarFile(null);
       }
     } catch (err: any) {
       setMessage({
@@ -92,7 +123,7 @@ export default function AuthForm() {
           </p>
         </div>
 
-        {/* MENSAGES DE ÉXITO O ERROR */}
+        {/* MENSAJES DE ÉXITO O ERROR */}
         {message && (
           <div
             className={`p-3 rounded-xl text-xs font-semibold mb-4 border ${
@@ -110,6 +141,42 @@ export default function AuthForm() {
           {/* CAMPOS ADICIONALES (SOLO PARA REGISTRO) */}
           {!isLogin && (
             <div className="space-y-4 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+              {/* NUEVO INPUT: Fotografía de Perfil Opcional */}
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                  Fotografía de Perfil (Opcional)
+                </label>
+                <div className="relative">
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-950/50 rounded-xl cursor-pointer transition-colors p-2">
+                      <div className="flex items-center gap-3">
+                        <Camera className="size-5 text-zinc-500" />
+                        <div className="text-left">
+                          <p className="text-[11px] font-medium text-zinc-300">
+                            {avatarFile
+                              ? avatarFile.name
+                              : "Seleccionar imagen"}
+                          </p>
+                          <p className="text-[9px] text-zinc-500">
+                            JPG, PNG (Máx 2MB)
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setAvatarFile(e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Nombres */}
               <div>
                 <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
@@ -192,9 +259,9 @@ export default function AuthForm() {
                     required
                     value={departamento}
                     onChange={(e) => setDepartamento(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors appearance-none"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="" disabled text-zinc-600>
+                    <option value="" disabled>
                       Selecciona un departamento
                     </option>
                     <option value="La Paz">La Paz</option>
@@ -281,6 +348,7 @@ export default function AuthForm() {
             onClick={() => {
               setIsLogin(!isLogin);
               setMessage(null);
+              setAvatarFile(null);
             }}
             className="text-xs text-zinc-400 hover:text-blue-400 font-medium transition-colors cursor-pointer"
           >

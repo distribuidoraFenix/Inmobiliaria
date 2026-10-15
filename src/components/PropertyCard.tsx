@@ -65,15 +65,13 @@ export default function PropertyCard({ propiedad }: PropertyCardProps) {
           {propiedad.titulo}
         </h3>
 
-        {/* Dormitorios */}
+        {/* Superficie Total (Adaptado temporalmente para no complicarnos con los detalles todavía) */}
         <div className="flex items-center gap-2 text-zinc-300 text-xs mb-4">
           <Bed className="w-3.5 h-3.5 text-zinc-500" aria-hidden="true" />
           <span className="font-semibold text-zinc-100">
             {propiedad.dormitorios}
           </span>
-          <span className="text-zinc-400">
-            {propiedad.dormitorios === 1 ? "dormitorio" : "dormitorios"}
-          </span>
+          <span className="text-zinc-400">m² de superficie total</span>
         </div>
 
         {/* CONTENEDOR INFERIOR: Precio, Agente y Botón */}

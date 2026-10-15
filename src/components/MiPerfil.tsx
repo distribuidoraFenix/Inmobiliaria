@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Tipado estricto basado en tu tabla de Supabase
+// Tipado estricto basado en tu tabla de Supabase (ACTUALIZADO con avatar_url)
 interface PerfilDatos {
   nombres: string;
   apellido_paterno: string;
@@ -29,6 +29,7 @@ interface PerfilDatos {
   telefono_referencia_dos: string | null;
   fecha_ingreso: string | null;
   rol: "user" | "admin";
+  avatar_url: string | null; // <-- Agregado para TypeScript
 }
 
 export default function MiPerfil() {
@@ -89,6 +90,11 @@ export default function MiPerfil() {
     });
   };
 
+  // LÓGICA DE DETECCIÓN MULTIMEDIA PARA EL AVATAR
+  const fotoPerfilSrc = perfil.avatar_url
+    ? perfil.avatar_url
+    : `https://dicebear.com{perfil.nombres || "A"}`;
+
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 animate-fade-in">
       {/* BOTÓN REGRESAR */}
@@ -105,9 +111,16 @@ export default function MiPerfil() {
         {/* ENCABEZADO DE PERFIL */}
         <div className="p-6 bg-linear-to-r from-zinc-900 to-zinc-800/50 border-b border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="size-16 rounded-full bg-blue-600/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-inner">
-              <User className="size-8" />
+            {/* CONTENEDOR MULTIMEDIA DEL AVATAR DINÁMICO */}
+            <div className="size-16 rounded-full overflow-hidden border border-blue-500/30 shadow-inner shrink-0 bg-zinc-950">
+              <img
+                src={fotoPerfilSrc}
+                alt={`Avatar de ${perfil.nombres}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
+
             <div className="text-center sm:text-left">
               <h2 className="text-lg font-black text-zinc-100 tracking-tight">
                 {perfil.nombres} {perfil.apellido_paterno}{" "}
