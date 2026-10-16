@@ -1,10 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import {
-  User,
-  Phone,
-  MapPin,
-  Calendar,
   Briefcase,
   Shield,
   AlertCircle,
@@ -23,26 +19,56 @@ export default function RegistrarAgente() {
     text: string;
   } | null>(null);
 
-  // Estados del Formulario
+  // Estados del Formulario Clásicos
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rol, setRol] = useState<"user" | "admin">("user");
   const [nombres, setNombres] = useState("");
   const [apellidoPaterno, setApellidoPaterno] = useState("");
   const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [telefonoPersonal, setTelefonoPersonal] = useState("");
   const [telefonoCorporativo, setTelefonoCorporativo] = useState("");
-  const [departamento, setDepartamento] = useState("");
   const [direccion, setDireccion] = useState("");
-  const [referencia, setReferencia] = useState("");
+  const [fechaIngreso, setFechaIngreso] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
+  // Estados de la Sección 3: Contacto de Emergencia (Reorganizado con nuevo propósito)
+  const [referenciaNombre, setReferenciaNombre] = useState("");
   const [parentezco, setParentezco] = useState("");
   const [telefonoReferencia, setTelefonoReferencia] = useState("");
   const [telefonoReferenciaDos, setTelefonoReferenciaDos] = useState("");
-  const [fechaIngreso, setFechaIngreso] = useState("");
 
-  // NUEVO ESTADO: Guarda el archivo de imagen de perfil seleccionado para el nuevo agente
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  // ESTADOS MAESTROS: Sincronizados exactamente con los nombres del JSX
+  const [listaCargos, setListaCargos] = useState<any[]>([]);
+  const [cargoSeleccionado, setCargoSeleccionado] = useState("");
+  const [listaSucursales, setListaSucursales] = useState<any[]>([]);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState("");
+
+  // Cargar catálogos corporativos desde Supabase al montar la pantalla
+  useEffect(() => {
+    async function cargarDatosMaestros() {
+      try {
+        const { data: cargos, error: errCargos } = await supabase
+          .from("cargos")
+          .select("id, nombre_cargo")
+          .order("nombre_cargo", { ascending: true });
+
+        const { data: sucursales, error: errSucursales } = await supabase
+          .from("sucursales")
+          .select("id, nombre_sucursal, departamento")
+          .order("nombre_sucursal", { ascending: true });
+
+        if (errCargos) throw errCargos;
+        if (errSucursales) throw errSucursales;
+
+        setListaCargos(cargos || []);
+        setListaSucursales(sucursales || []);
+      } catch (err) {
+        console.error("Error al cargar catálogos corporativos:", err);
+      }
+    }
+    cargarDatosMaestros();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +76,25 @@ export default function RegistrarAgente() {
     setMessage(null);
 
     try {
+      if (!cargoSeleccionado || !sucursalSeleccionada) {
+        throw new Error(
+          "Por favor, selecciona un Cargo y una Sucursal válidos.",
+        );
+      }
+
+      // Asignación automática de roles de seguridad basados en el cargo ejecutivo
+      const cargoObj = listaCargos.find(
+        (c) => c.id === Number(cargoSeleccionado),
+      );
+      const nombreCargo = cargoObj?.nombre_cargo || "Vendedor";
+      const rolResuelto =
+        nombreCargo === "Gerente" || nombreCargo === "Supervisor"
+          ? "admin"
+          : "user";
+
       let urlPublicaAvatar = null;
 
-      // 1. Si el administrador seleccionó una fotografía para el agente, la subimos al Storage
+      // Subida opcional multimedia al Storage Bucket
       if (avatarFile) {
         const extensionArchivo = avatarFile.name.split(".").pop();
         const nombreUnico = `${Date.now()}_agente_avatar.${extensionArchivo}`;
@@ -70,19 +112,20 @@ export default function RegistrarAgente() {
         urlPublicaAvatar = dataUrl.publicUrl;
       }
 
-      // 2. Crear el usuario en el Auth de Supabase (Pasándole el ROL y el AVATAR en la metadata para el Trigger)
+      // Crear credenciales en Auth mandando la metadata para el Trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            rol,
+            rol: rolResuelto,
             nombres,
             apellido_paterno: apellidoPaterno,
+            apellido_materno: apellidoMaterno || null,
             fecha_nacimiento: fechaNacimiento,
             telefono_personal: telefonoPersonal,
-            departamento,
-            avatar_url: urlPublicaAvatar, // Se inyecta directamente a través de la metadata leída por el nuevo Trigger
+            sucursal_id: sucursalSeleccionada,
+            avatar_url: urlPublicaAvatar,
           },
         },
       });
@@ -93,20 +136,21 @@ export default function RegistrarAgente() {
           "No se pudo obtener la información del usuario creado.",
         );
 
-      // 3. Actualizar el perfil recién creado por el Trigger con el resto de datos complementarios extendidos
+      // Insertar el resto de datos extendidos en la tabla pública de perfiles
       const { error: perfilError } = await supabase
         .from("perfiles")
         .update({
           apellido_materno: apellidoMaterno || null,
           telefono_corporativo: telefonoCorporativo || null,
           direccion: direccion || null,
-          referencia: referencia || null,
+          cargo_id: cargoSeleccionado,
+          referencia: referenciaNombre || null, // Guardamos el nombre del contacto en la columna referencia
           parentezco: parentezco || null,
           telefono_referencia: telefonoReferencia || null,
           telefono_referencia_dos: telefonoReferenciaDos || null,
           fecha_ingreso: fechaIngreso
             ? fechaIngreso
-            : new Date().toISOString().split("T"),
+            : new Date().toISOString().split("T")[0],
         })
         .eq("id", authData.user.id);
 
@@ -114,10 +158,9 @@ export default function RegistrarAgente() {
 
       setMessage({
         type: "success",
-        text: `¡Agente registrado con éxito con el rol de ${rol.toUpperCase()}! Los datos y su fotografía han quedado inyectados.`,
+        text: `¡Asesor registrado con éxito! Cargo asignado: ${nombreCargo}. Rol resuelto en el sistema: ${rolResuelto.toUpperCase()}.`,
       });
 
-      // Limpiar Formulario completo
       resetearestados();
     } catch (err: any) {
       console.error(err);
@@ -133,22 +176,23 @@ export default function RegistrarAgente() {
   const resetearestados = () => {
     setEmail("");
     setPassword("");
-    setRol("user");
+    setCargoSeleccionado("");
     setNombres("");
     setApellidoPaterno("");
     setApellidoMaterno("");
     setFechaNacimiento("");
     setTelefonoPersonal("");
     setTelefonoCorporativo("");
-    setDepartamento("");
+    setSucursalSeleccionada("");
     setDireccion("");
-    setReferencia("");
+    setReferenciaNombre("");
     setParentezco("");
     setTelefonoReferencia("");
     setTelefonoReferenciaDos("");
     setFechaIngreso("");
     setAvatarFile(null);
   };
+
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
       {/* ENCABEZADO Y VOLVER */}
@@ -258,29 +302,35 @@ export default function RegistrarAgente() {
                 />
               </div>
             </div>
+
+            {/* NUEVO INPUT: Selector Dinámico de Cargos (Reemplaza al selector manual de roles) */}
             <div>
               <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                Rol del Sistema
+                Cargo Corporativo
               </label>
               <div className="relative">
                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
                 <select
                   required
-                  value={rol}
-                  onChange={(e) => setRol(e.target.value as "user" | "admin")}
+                  value={cargoSeleccionado}
+                  onChange={(e) => setCargoSeleccionado(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 pl-10 pr-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="user">
-                    User (Agente Inmobiliario Regular)
+                  <option value="" disabled>
+                    Selecciona un cargo ejecutivo
                   </option>
-                  <option value="admin">Admin (Administrador Total)</option>
+                  {listaCargos.map((cargo) => (
+                    <option key={cargo.id} value={cargo.id}>
+                      {cargo.nombre_cargo}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </div>
         </div>
 
-        {/* SECCIÓN 2: DATOS PERSONALES */}
+        {/* SECCIÓN 2: DATOS PERSONALES Y CORPORATIVOS */}
         <div className="space-y-4">
           <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest border-b border-zinc-800 pb-2">
             2. Información del Asesor
@@ -336,30 +386,29 @@ export default function RegistrarAgente() {
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors"
               />
             </div>
+
+            {/* NUEVO INPUT: Selector Dinámico de Sucursales (Reemplaza al selector manual de departamentos) */}
             <div>
               <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                Departamento Sede
+                Sucursal Asignada
               </label>
               <select
                 required
-                value={departamento}
-                onChange={(e) => setDepartamento(e.target.value)}
+                value={sucursalSeleccionada}
+                onChange={(e) => setSucursalSeleccionada(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors appearance-none cursor-pointer"
               >
                 <option value="" disabled>
-                  Selecciona un departamento
+                  Selecciona una sucursal
                 </option>
-                <option value="La Paz">La Paz</option>
-                <option value="Santa Cruz">Santa Cruz</option>
-                <option value="Cochabamba">Cochabamba</option>
-                <option value="Oruro">Oruro</option>
-                <option value="Potosí">Potosí</option>
-                <option value="Tarija">Tarija</option>
-                <option value="Chuquisaca">Chuquisaca</option>
-                <option value="Beni">Beni</option>
-                <option value="Pando">Pando</option>
+                {listaSucursales.map((suc) => (
+                  <option key={suc.id} value={suc.id}>
+                    {suc.nombre_sucursal} ({suc.departamento})
+                  </option>
+                ))}
               </select>
             </div>
+
             <div>
               <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
                 Fecha de Ingreso Corporativo
@@ -373,7 +422,7 @@ export default function RegistrarAgente() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1">
             <div>
               <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
                 Dirección de Domicilio (Opcional)
@@ -386,22 +435,10 @@ export default function RegistrarAgente() {
                 placeholder="Av. Principal Nro. 450, Zona Central"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                Puntos de Referencia Zona (Opcional)
-              </label>
-              <input
-                type="text"
-                value={referencia}
-                onChange={(e) => setReferencia(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors"
-                placeholder="Frente al Banco Unión, Portón Azul"
-              />
-            </div>
           </div>
         </div>
 
-        {/* SECCIÓN 3: CONTACTO Y DE EMERGENCIA */}
+        {/* SECCIÓN 3: CONTACTO Y DE EMERGENCIA (REORGANIZADO CON TU NUEVA REGLA) */}
         <div className="space-y-4">
           <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest border-b border-zinc-800 pb-2">
             3. Números Telefónicos y Contactos Referenciales
@@ -434,7 +471,22 @@ export default function RegistrarAgente() {
             </div>
           </div>
 
-          <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Bloque agrupado de contacto de emergencia */}
+          <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* CAMBIO DE PROPÓSITO: El campo de referencia física de dirección ahora es el NOMBRE DEL CONTACTO */}
+            <div>
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                Nombre Contacto Ref.
+              </label>
+              <input
+                type="text"
+                value={referenciaNombre}
+                onChange={(e) => setReferenciaNombre(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500"
+                placeholder="Nombre completo"
+              />
+            </div>
+
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
                 Parentesco del Contacto
@@ -447,9 +499,10 @@ export default function RegistrarAgente() {
                 placeholder="Cónyuge, Padre, Hermano"
               />
             </div>
+
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Teléfono Referencia Primario
+                Teléfono Referencia 1
               </label>
               <input
                 type="tel"
@@ -459,9 +512,10 @@ export default function RegistrarAgente() {
                 placeholder="70125488"
               />
             </div>
+
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Teléfono Referencia Secundario
+                Teléfono Referencia 2
               </label>
               <input
                 type="tel"

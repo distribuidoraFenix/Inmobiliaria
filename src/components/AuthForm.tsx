@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import {
   Eye,
@@ -10,7 +10,7 @@ import {
   Calendar,
   MapPin,
   Loader2,
-  Camera, // Importamos el icono para el selector multimedia
+  Camera,
 } from "lucide-react";
 
 export default function AuthForm() {
@@ -22,17 +22,39 @@ export default function AuthForm() {
     text: string;
   } | null>(null);
 
-  // Estados del Formulario
+  // Estados del Formulario Universales
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombres, setNombres] = useState("");
   const [apellidoPaterno, setApellidoPaterno] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [telefonoPersonal, setTelefonoPersonal] = useState("");
-  const [departamento, setDepartamento] = useState("");
-
-  // NUEVO ESTADO: Guarda el archivo de imagen de perfil seleccionado
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+
+  // CONTROL DE NUEVOS CAMPOS: Declaración explícita para evitar errores de compilación
+  const [apellidoMaterno, setApellidoMaterno] = useState<string>("");
+  const [sucursales, setSucursales] = useState<any[]>([]);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState<string>("");
+
+  // Cargar de la nube la lista física de sucursales bolivianas
+  useEffect(() => {
+    if (isLogin) return;
+
+    async function obtenerSucursales() {
+      try {
+        const { data, error } = await supabase
+          .from("sucursales")
+          .select("id, nombre_sucursal, departamento")
+          .order("nombre_sucursal", { ascending: true });
+
+        if (error) throw error;
+        setSucursales(data || []);
+      } catch (err) {
+        console.error("Error al cargar las sucursales en el login:", err);
+      }
+    }
+    obtenerSucursales();
+  }, [isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,12 +71,15 @@ export default function AuthForm() {
         if (error) throw error;
         setMessage({ type: "success", text: "¡Sesión iniciada con éxito!" });
       } else {
-        // --- PROCESO DE REGISTRO PÚBLICO OPCIONAL EN IMÁGENES ---
+        // --- PROCESO DE REGISTRO PÚBLICO CON NUEVA METADATA ---
+        if (!sucursalSeleccionada) {
+          throw new Error("Por favor, selecciona una sucursal corporativa.");
+        }
+
         let urlPublicaAvatar = null;
 
-        // 1. Si el usuario SELECCIONÓ una fotografía, la subimos a la nube
+        // Subida opcional multimedia WebP/Imagen (Manteniendo tu gran logro)
         if (avatarFile) {
-          // Creamos un nombre único limpio basado en milisegundos para evitar que se pisen los archivos
           const extensionArchivo = avatarFile.name.split(".").pop();
           const nombreUnico = `${Date.now()}_avatar.${extensionArchivo}`;
 
@@ -64,7 +89,6 @@ export default function AuthForm() {
 
           if (errorSubida) throw errorSubida;
 
-          // Extraemos la URL pública del archivo recién guardado en Supabase Storage
           const { data: dataUrl } = supabase.storage
             .from("avatares")
             .getPublicUrl(nombreUnico);
@@ -72,18 +96,20 @@ export default function AuthForm() {
           urlPublicaAvatar = dataUrl.publicUrl;
         }
 
-        // 2. Ejecutamos el registro inyectando la URL (ya sea el string o null) en los metadatos
+        // Ejecutamos el registro inyectando la sucursal y el apellido materno opcional
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               nombres,
+              rol: "user", // Rol por defecto inicial público
               apellido_paterno: apellidoPaterno,
+              apellido_materno: apellidoMaterno || null,
               fecha_nacimiento: fechaNacimiento,
               telefono_personal: telefonoPersonal,
-              departamento,
-              avatar_url: urlPublicaAvatar, // Se mapeará automáticamente mediante el trigger
+              sucursal_id: sucursalSeleccionada,
+              avatar_url: urlPublicaAvatar,
             },
           },
         });
@@ -95,7 +121,6 @@ export default function AuthForm() {
           text: "¡Registro exitoso! Por favor, revisa tu correo electrónico para confirmar tu cuenta.",
         });
 
-        // Limpiamos el archivo temporal
         setAvatarFile(null);
       }
     } catch (err: any) {
@@ -141,7 +166,7 @@ export default function AuthForm() {
           {/* CAMPOS ADICIONALES (SOLO PARA REGISTRO) */}
           {!isLogin && (
             <div className="space-y-4 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
-              {/* NUEVO INPUT: Fotografía de Perfil Opcional */}
+              {/* Fotografía de Perfil Opcional */}
               <div>
                 <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
                   Fotografía de Perfil (Opcional)
@@ -189,7 +214,7 @@ export default function AuthForm() {
                     type="text"
                     value={nombres}
                     onChange={(e) => setNombres(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-hidden focus:border-blue-500 transition-colors"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-blue-500 transition-colors"
                     placeholder="Juan Carlos"
                   />
                 </div>
@@ -209,6 +234,23 @@ export default function AuthForm() {
                     onChange={(e) => setApellidoPaterno(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-hidden focus:border-blue-500 transition-colors"
                     placeholder="Pérez"
+                  />
+                </div>
+              </div>
+
+              {/* NUEVO INPUT: Apellido Materno (Opcional) */}
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
+                  Apellido Materno (Opcional)
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={apellidoMaterno}
+                    onChange={(e) => setApellidoMaterno(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-hidden focus:border-blue-500 transition-colors"
+                    placeholder="Arce"
                   />
                 </div>
               </div>
@@ -248,31 +290,27 @@ export default function AuthForm() {
                 </div>
               </div>
 
-              {/* Departamento */}
+              {/* NUEVO INPUT: Selector Dinámico de Sucursales */}
               <div>
                 <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-                  Departamento
+                  Sucursal Asignada
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
                   <select
                     required
-                    value={departamento}
-                    onChange={(e) => setDepartamento(e.target.value)}
+                    value={sucursalSeleccionada}
+                    onChange={(e) => setSucursalSeleccionada(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-100 focus:outline-hidden focus:border-blue-500 transition-colors appearance-none cursor-pointer"
                   >
                     <option value="" disabled>
-                      Selecciona un departamento
+                      Selecciona una sucursal corporativa
                     </option>
-                    <option value="La Paz">La Paz</option>
-                    <option value="Santa Cruz">Santa Cruz</option>
-                    <option value="Cochabamba">Cochabamba</option>
-                    <option value="Oruro">Oruro</option>
-                    <option value="Potosí">Potosí</option>
-                    <option value="Tarija">Tarija</option>
-                    <option value="Chuquisaca">Chuquisaca</option>
-                    <option value="Beni">Beni</option>
-                    <option value="Pando">Pando</option>
+                    {sucursales.map((suc) => (
+                      <option key={suc.id} value={suc.id}>
+                        {suc.nombre_sucursal} ({suc.departamento})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -296,7 +334,6 @@ export default function AuthForm() {
               />
             </div>
           </div>
-
           <div>
             <label className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
               Contraseña
