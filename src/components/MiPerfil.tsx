@@ -91,9 +91,6 @@ export default function MiPerfil() {
   };
 
   // LÓGICA DE DETECCIÓN MULTIMEDIA PARA EL AVATAR
-  const fotoPerfilSrc = perfil.avatar_url
-    ? perfil.avatar_url
-    : `https://dicebear.com{perfil.nombres || "A"}`;
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 animate-fade-in">
@@ -112,12 +109,21 @@ export default function MiPerfil() {
         <div className="p-6 bg-linear-to-r from-zinc-900 to-zinc-800/50 border-b border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* CONTENEDOR MULTIMEDIA DEL AVATAR DINÁMICO */}
-            <div className="size-16 rounded-full overflow-hidden border border-blue-500/30 shadow-inner shrink-0 bg-zinc-950">
+
+            <div className="size-16 rounded-full overflow-hidden border border-blue-500/30 shadow-inner shrink-0 bg-zinc-950 flex items-center justify-center">
               <img
-                src={fotoPerfilSrc}
-                alt={`Avatar de ${perfil.nombres}`}
+                src={
+                  perfil?.avatar_url ||
+                  "https://ltivmoqjhoxfmlbplkee.supabase.co/storage/v1/object/public/avatares/usuario.webp"
+                }
+                alt={`Avatar de ${perfil?.nombres || "Agente"}`}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                onError={(e) => {
+                  // Fallback por si la URL de la base de datos falla o se corrompe en el viaje
+                  (e.target as HTMLImageElement).src =
+                    "https://ltivmoqjhoxfmlbplkee.supabase.co/storage/v1/object/public/avatares/usuario.webp";
+                }}
               />
             </div>
 
