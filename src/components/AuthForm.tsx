@@ -63,12 +63,30 @@ export default function AuthForm() {
 
     try {
       if (isLogin) {
-        // --- PROCESO DE INICIO DE SESIÓN ---
-        const { error } = await supabase.auth.signInWithPassword({
+        // 1. Llamamos a nuestra función de base de datos antes de generar cualquier sesión
+        const { data: validacion, error: rpcError } = await supabase.rpc(
+          "login_seguro_asesores",
+          {
+            p_email: email,
+            p_password: password,
+          },
+        );
+
+        if (rpcError) throw rpcError;
+
+        // 2. REBOTE INMEDIATO SIN PARPADEO: Si la base de datos determinó que está inactivo o erróneo, frenamos el flujo aquí
+        if (!validacion || validacion.success === false) {
+          throw new Error(validacion?.error || "Credenciales inválidas.");
+        }
+
+        // 3. SE CREA LA SESIÓN SÓLO SI PASÓ LA VERIFICACIÓN DE ESTADO ACTIVO
+        // Al ejecutarse en este orden, el usuario inactivo jamás llega a esta línea y la pantalla no cambia ni parpadea
+        const { error: authError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) throw error;
+
+        if (authError) throw authError;
         setMessage({ type: "success", text: "¡Sesión iniciada con éxito!" });
       } else {
         // --- PROCESO DE REGISTRO PÚBLICO CON NUEVA METADATA ---
@@ -148,21 +166,19 @@ export default function AuthForm() {
           </p>
         </div>
 
-        {/* MENSAJES DE ÉXITO O ERROR */}
-        {message && (
-          <div
-            className={`p-3 rounded-xl text-xs font-semibold mb-4 border ${
-              message.type === "success"
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
         {/* FORMULARIO */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {message && (
+            <div
+              className={`p-3 rounded-xl text-xs font-semibold mb-4 border animate-fade-in ${
+                message.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
           {/* CAMPOS ADICIONALES (SOLO PARA REGISTRO) */}
           {!isLogin && (
             <div className="space-y-4 max-h-80 overflow-y-auto pr-1 scrollbar-thin">

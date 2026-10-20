@@ -44,7 +44,7 @@ const itemsMenuLateral: EnlaceNavegacion[] = [
   {
     tipo: "enlace",
     label: "Lista de propiedades",
-    href: "#listapropiedades",
+    href: "/lista-propiedades",
     soloAdmin: true,
   },
   {
@@ -62,7 +62,7 @@ const itemsMenuLateral: EnlaceNavegacion[] = [
   {
     tipo: "enlace",
     label: "Lista de agentes",
-    href: "#listaagentes",
+    href: "lista-agentes",
     soloAdmin: true,
   },
   {
@@ -207,7 +207,6 @@ export default function Navbar() {
 
         {/* SECCIÓN DERECHA: Utilidades y Perfil */}
         <div className="flex items-center gap-2">
-          {/* 🔔 BOTÓN DINÁMICO DE LA CAMPANA CON DROPDOWN INTERNO */}
           <div className="relative">
             <button
               onClick={() => {

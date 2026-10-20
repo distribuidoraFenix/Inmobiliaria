@@ -10,6 +10,8 @@ import RutaAdmin from "./components/RutaAdmin";
 import AuthForm from "./components/AuthForm";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
+import ListaAgentes from "./components/ListaAgentes";
+import ListaPropiedades from "./components/ListaPropiedades";
 
 // Componente del Catálogo Principal Conectado a Supabase
 function HomeCatalog() {
@@ -20,11 +22,12 @@ function HomeCatalog() {
     async function obtenerPropiedades() {
       try {
         setLoading(true);
-        
+
         // Consultamos solo los campos básicos universales que necesitas mostrar ahora
         const { data, error } = await supabase
           .from("propiedades")
-          .select(`
+          .select(
+            `
             id,
             titulo,
             modalidad,
@@ -35,7 +38,8 @@ function HomeCatalog() {
             imagenes,
             tipos_propiedad ( nombre ),
             agente:perfiles ( nombres, apellido_paterno )
-          `)
+          `,
+          )
           .eq("estado", "Disponible");
 
         if (error) throw error;
@@ -48,14 +52,14 @@ function HomeCatalog() {
           tipo: p.tipos_propiedad?.nombre || "Inmueble",
           zona: p.zona,
           // Pasamos temporalmente la superficie total en m² al campo dormitorios para renderizar sin errores
-          dormitorios: Math.round(p.superficie_total), 
+          dormitorios: Math.round(p.superficie_total),
           precio: `${p.moneda === "USD" ? "$us" : "Bs"} ${Number(p.precio).toLocaleString("es-BO")}`,
           imagenes: p.imagenes || [],
           agente: {
             nombre: `${p.agente?.nombres} ${p.agente?.apellido_paterno || ""}`,
             avatar: `https://dicebear.com{p.agente?.nombres || "A"}`, // Iniciales como avatar temporal
-            telefono: "59100000000"
-          }
+            telefono: "59100000000",
+          },
         }));
 
         setPropiedades(propiedadesAdaptadas);
@@ -85,10 +89,11 @@ function HomeCatalog() {
           Propiedades Destacadas
         </h2>
         <p className="text-sm text-zinc-400 mt-1">
-          Encuentra tu próximo espacio ideal en las mejores zonas de Bolivia de forma real.
+          Encuentra tu próximo espacio ideal en las mejores zonas de Bolivia de
+          forma real.
         </p>
       </header>
-      
+
       {propiedades.length === 0 ? (
         <div className="text-center py-12 text-zinc-500 text-xs font-medium">
           No hay propiedades disponibles en este momento.
@@ -128,13 +133,15 @@ function AppContenido() {
           <Route path="/" element={<HomeCatalog />} />
           <Route path="/propiedad/:id" element={<PropertyDetail />} />
           <Route path="/perfil" element={<MiPerfil />} />
-          <Route 
-            path="/registrar-agente" 
+          <Route path="/lista-agentes" element={<ListaAgentes />} />
+          <Route path="/lista-propiedades" element={<ListaPropiedades />} />
+          <Route
+            path="/registrar-agente"
             element={
               <RutaAdmin>
                 <RegistrarAgente />
               </RutaAdmin>
-            } 
+            }
           />
         </Routes>
       </div>
