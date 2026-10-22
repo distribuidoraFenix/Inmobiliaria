@@ -3,13 +3,9 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 import {
   Home,
-  Building,
-  DollarSign,
-  MapPin,
   Navigation,
   Info,
   Wifi,
-  CheckSquare,
   ArrowLeft,
   Loader2,
   Save,
@@ -620,7 +616,7 @@ export default function RegistroPropiedad() {
 
           {/* 🌟 INTEGRACIÓN DE LA API MAPA INTERACTIVO CON PIN ARRASTRABLE */}
           <div className="mt-4">
-            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+            <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
               <Navigation className="size-3.5 text-blue-500" />
               <span>
                 Geolocalización Inmobiliaria (Arrastra el Pin sobre el inmueble)
@@ -865,7 +861,7 @@ export default function RegistroPropiedad() {
                 <div className="pl-7 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs animate-fade-in pt-1">
                   {/* SERVICIO DE GAS */}
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                       <Flame className="size-3 text-amber-500" />
                       <span>Servicio de Gas</span>
                     </label>
@@ -1048,7 +1044,7 @@ export default function RegistroPropiedad() {
                   />
                   <span>Comparte Roomie</span>
                 </label>
-                
+
                 <label className="flex items-center gap-2 bg-zinc-950/30 p-2.5 rounded-xl border border-zinc-800/50 cursor-pointer select-none hover:bg-zinc-950 transition-colors">
                   <input
                     type="checkbox"
