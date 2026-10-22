@@ -12,6 +12,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
 import ListaAgentes from "./components/ListaAgentes";
 import ListaPropiedades from "./components/ListaPropiedades";
+import RegistroPropiedad from "./components/RegistrarPropiedad";
+import { APIProvider } from "@vis.gl/react-google-maps";
 
 // Componente del Catálogo Principal Conectado a Supabase
 function HomeCatalog() {
@@ -135,6 +137,7 @@ function AppContenido() {
           <Route path="/perfil" element={<MiPerfil />} />
           <Route path="/lista-agentes" element={<ListaAgentes />} />
           <Route path="/lista-propiedades" element={<ListaPropiedades />} />
+          <Route path="/registrar-propiedad" element={<RegistroPropiedad />} />
           <Route
             path="/registrar-agente"
             element={
@@ -151,8 +154,10 @@ function AppContenido() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContenido />
-    </AuthProvider>
+    <APIProvider apiKey="AIzaSyAIsUQ5hRb_WVdztoO4bZ_0UlbbFVpwo0Y">
+      <AuthProvider>
+        <AppContenido />
+      </AuthProvider>
+    </APIProvider>
   );
 }

@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import {
   Menu,
-  Home,
   Bell,
   Moon,
   X,
@@ -12,6 +11,10 @@ import {
   Settings,
   Key,
   Check,
+  User,
+  Briefcase,
+  Plus,
+  Home,
 } from "lucide-react";
 
 interface EnlaceNavegacion {
@@ -38,7 +41,7 @@ const itemsMenuLateral: EnlaceNavegacion[] = [
   {
     tipo: "enlace",
     label: "Registrar Propiedad",
-    href: "#propiedades",
+    href: "/registrar-propiedad",
     soloAdmin: false,
   },
   {
