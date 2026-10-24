@@ -18,6 +18,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Map as GoogleMap, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 export default function RegistroPropiedad() {
+  const [formData, setFormData] = React.useState({
+    departamento: "Santa Cruz",
+    zona: "",
+    direccion: "",
+    superficie_total: 0,
+    
+  });
   const { user, rol } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
@@ -27,6 +34,17 @@ export default function RegistroPropiedad() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  type DepartamentoKey =
+    | "Santa Cruz"
+    | "La Paz"
+    | "Cochabamba"
+    | "Tarija"
+    | "Oruro"
+    | "Potosí"
+    | "Chuquisaca"
+    | "Beni"
+    | "Pando";
 
   const [listaAgentes, setListaAgentes] = useState<any[]>([]);
   const [agenteAsignadoId, setAgenteAsignadoId] = useState<string>("");
@@ -100,6 +118,36 @@ export default function RegistroPropiedad() {
   const [accesoCocina, setAccesoCocina] = useState<boolean>(false);
   const [cocinaIndependiente, setCocinaIndependiente] =
     useState<boolean>(false);
+
+  // Coordenadas de referencia para centrar el mapa según el departamento seleccionado
+  const coordenadasDepartamentos = {
+    "Santa Cruz": { lat: -17.7833, lng: -63.1833 },
+    "La Paz": { lat: -16.5, lng: -68.15 },
+    Cochabamba: { lat: -17.3895, lng: -66.1568 },
+    Tarija: { lat: -21.5355, lng: -64.7296 },
+    Oruro: { lat: -17.9833, lng: -67.15 },
+    Potosí: { lat: -19.5836, lng: -65.7531 },
+    Chuquisaca: { lat: -19.0333, lng: -65.2627 },
+    Beni: { lat: -14.8333, lng: -64.9 },
+    Pando: { lat: -11.0267, lng: -68.7692 },
+  };
+
+  // Función para manejar el cambio de departamento en tu formulario
+  const handleDepartamentoChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const deptoSeleccionado = e.target.value as DepartamentoKey;
+    // Actualizas el estado del departamento
+    setFormData({ ...formData, departamento: deptoSeleccionado });
+
+    // Si existe la coordenada para ese departamento, actualizas la ubicación del mapa/pin
+    if (coordenadasDepartamentos[deptoSeleccionado]) {
+      const { lat, lng } = coordenadasDepartamentos[deptoSeleccionado];
+      setLatitud(lat);
+      setLongitud(lng);
+      // Aquí invocas la función de tu mapa (ej: map.setCenter({lat, lng})) para mover el pin o la vista
+    }
+  };
 
   useEffect(() => {
     async function inicializarFormulario() {
@@ -510,20 +558,34 @@ export default function RegistroPropiedad() {
             </div>
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Departamento (Bolivia)
+                Superficie Total (m²)
+              </label>
+              <input
+                required
+                type="number"
+                step="any"
+                value={superficieTotal}
+                onChange={(e) => setSuperficieTotal(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 font-mono"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="campo-grupo">
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
+                DEPARTAMENTO (BOLIVIA)
               </label>
               <select
-                required
-                value={departamento}
-                onChange={(e) => setDepartamento(e.target.value)}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                name="departamento"
+                value={formData.departamento}
+                onChange={handleDepartamentoChange}
               >
-                <option value="Santa Cruz">Santa Cruz</option>
                 <option value="La Paz">La Paz</option>
+                <option value="Santa Cruz">Santa Cruz</option>
                 <option value="Cochabamba">Cochabamba</option>
                 <option value="Tarija">Tarija</option>
                 <option value="Oruro">Oruro</option>
-                <option value="Potosi">Potosí</option>
+                <option value="Potosí">Potosí</option>
                 <option value="Chuquisaca">Chuquisaca</option>
                 <option value="Beni">Beni</option>
                 <option value="Pando">Pando</option>
@@ -543,20 +605,6 @@ export default function RegistroPropiedad() {
               />
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Superficie Total (m²)
-              </label>
-              <input
-                required
-                type="number"
-                step="any"
-                value={superficieTotal}
-                onChange={(e) => setSuperficieTotal(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 font-mono"
-                placeholder="0.00"
-              />
-            </div>
             <div className="sm:col-span-3">
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
                 Dirección Exacta Escrita
@@ -569,6 +617,48 @@ export default function RegistroPropiedad() {
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500"
                 placeholder="Ej: Calle Murillo Nro 420, entre Av. Illimani"
               />
+            </div>
+          </div>
+
+          {/* 🌟 INTEGRACIÓN DE LA API MAPA INTERACTIVO CON PIN ARRASTRABLE */}
+          <div className="mt-4">
+            <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Navigation className="size-3.5 text-blue-500" />
+              <span>
+                Geolocalización Inmobiliaria (Arrastra el Pin sobre el inmueble)
+              </span>
+            </label>
+
+            <div className="w-full h-64 rounded-xl border border-zinc-800 overflow-hidden relative bg-zinc-950">
+              <GoogleMap
+                defaultZoom={14}
+                defaultCenter={{ lat: latitud, lng: longitud }}
+                center={{ lat: latitud, lng: longitud }}
+                gestureHandling="cooperative"
+                style={{ width: "100%", height: "100%" }}
+                mapId="DEMO_MAP_ID" // 👈 REQUISITO: Google Maps exige un mapId para los marcadores avanzados (puedes usar este por defecto)
+              >
+                {/* 🌟 CAMBIADO: Usamos AdvancedMarker en lugar de Marker clásico */}
+                <AdvancedMarker
+                  position={{ lat: latitud, lng: longitud }}
+                  draggable={true}
+                  onDragEnd={(e) => {
+                    if (e.latLng) {
+                      setLatitud(e.latLng.lat());
+                      setLongitud(e.latLng.lng());
+                    }
+                  }}
+                />
+              </GoogleMap>
+            </div>
+            <div className="flex items-center gap-4 mt-2 font-mono text-[10px] text-zinc-500 px-1">
+              <span>
+                Lat: <span className="text-zinc-400">{latitud.toFixed(6)}</span>
+              </span>
+              <span>
+                Lng:{" "}
+                <span className="text-zinc-400">{longitud.toFixed(6)}</span>
+              </span>
             </div>
           </div>
 
@@ -612,48 +702,6 @@ export default function RegistroPropiedad() {
                 <span>⚠ {errorMultimedia}</span>
               </p>
             )}
-          </div>
-
-          {/* 🌟 INTEGRACIÓN DE LA API MAPA INTERACTIVO CON PIN ARRASTRABLE */}
-          <div className="mt-4">
-            <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Navigation className="size-3.5 text-blue-500" />
-              <span>
-                Geolocalización Inmobiliaria (Arrastra el Pin sobre el inmueble)
-              </span>
-            </label>
-
-            <div className="w-full h-64 rounded-xl border border-zinc-800 overflow-hidden relative bg-zinc-950">
-              <GoogleMap
-                defaultZoom={14}
-                defaultCenter={{ lat: latitud, lng: longitud }}
-                center={{ lat: latitud, lng: longitud }}
-                gestureHandling="cooperative"
-                style={{ width: "100%", height: "100%" }}
-                mapId="DEMO_MAP_ID" // 👈 REQUISITO: Google Maps exige un mapId para los marcadores avanzados (puedes usar este por defecto)
-              >
-                {/* 🌟 CAMBIADO: Usamos AdvancedMarker en lugar de Marker clásico */}
-                <AdvancedMarker
-                  position={{ lat: latitud, lng: longitud }}
-                  draggable={true}
-                  onDragEnd={(e) => {
-                    if (e.latLng) {
-                      setLatitud(e.latLng.lat());
-                      setLongitud(e.latLng.lng());
-                    }
-                  }}
-                />
-              </GoogleMap>
-            </div>
-            <div className="flex items-center gap-4 mt-2 font-mono text-[10px] text-zinc-500 px-1">
-              <span>
-                Lat: <span className="text-zinc-400">{latitud.toFixed(6)}</span>
-              </span>
-              <span>
-                Lng:{" "}
-                <span className="text-zinc-400">{longitud.toFixed(6)}</span>
-              </span>
-            </div>
           </div>
         </div>
         {/* SECCIÓN II: EXPEDIENTE DE CONTROL LEGAL E IMPUESTOS (CONFIDENCIAL) */}
@@ -885,7 +933,7 @@ export default function RegistroPropiedad() {
 
                   {/* SERVICIO DE LUZ */}
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                       <Lightbulb className="size-3 text-yellow-400" />
                       <span>Servicio de Luz</span>
                     </label>
@@ -909,7 +957,7 @@ export default function RegistroPropiedad() {
 
                   {/* SERVICIO DE AGUA */}
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                       <Droplet className="size-3 text-blue-400" />
                       <span>Servicio de Agua</span>
                     </label>
@@ -937,7 +985,7 @@ export default function RegistroPropiedad() {
             {/* SELECTOR EXCLUSIVO: WIFI */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                   <Wifi className="size-3 text-blue-400" />
                   <span>Conexión WiFi / Internet</span>
                 </label>
