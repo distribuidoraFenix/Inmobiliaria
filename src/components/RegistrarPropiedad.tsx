@@ -23,7 +23,6 @@ export default function RegistroPropiedad() {
     zona: "",
     direccion: "",
     superficie_total: 0,
-    
   });
   const { user, rol } = useAuth();
   const navigate = useNavigate();
@@ -402,32 +401,30 @@ export default function RegistroPropiedad() {
 
   if (loadingInit) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400 text-xs font-semibold gap-2">
-        <Loader2 className="size-4 animate-spin text-blue-500" />
-        <span>
-          Inicializando portafolio dinámico y catálogos de Derechos Reales...
-        </span>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center  text-xs font-semibold gap-2">
+        <Loader2 className="size-4 animate-spin text-(--color-app-text)" />
+        <span>Inicializando formulario de registo de propiedades...</span>
       </div>
     );
   }
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 animate-fade-in text-white select-none">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 animate-fade-in text-white select-none bg-(--color-app-bg)">
       {/* RETORNO AL PANEL */}
       <div className="mb-6">
         <Link
-          to="/lista-properties"
-          className="inline-flex items-center gap-2 text-xs font-bold text-zinc-400 hover:text-blue-400 transition-colors group cursor-pointer mb-2"
+          to="/lista-propiedades"
+          className="inline-flex items-center gap-2 text-xs font-bold text-(--color-app-text) hover:text-blue-400 transition-colors group cursor-pointer mb-2"
         >
           <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
           <span>Volver al Inventario</span>
         </Link>
-        <h2 className="text-xl font-black text-zinc-100 tracking-tight flex items-center gap-2">
-          <Save className="size-5 text-blue-500" />
-          <span>Formulario de Alta Portafolio Real</span>
+        <h2 className="text-xl font-bold text-(--color-success) tracking-tight flex items-center gap-2">
+          <Save className="size-5 text-(--color-primary)" />
+          <span>REGISTRO DE PROPIEDAD </span>
         </h2>
-        <p className="text-xs text-zinc-400 mt-0.5">
-          Módulo dinámico residencial: Registro de Habitación y Monoambiente con
-          Geolocalización
+        <p className="text-xs text-(--color-warning) mt-0.5">
+          Registra los datos de la propiedad precisa y responsablemente, si
+          tiene alguna duda contacte a su superior inmediato.
         </p>
       </div>
 
@@ -445,24 +442,24 @@ export default function RegistroPropiedad() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* SECCIÓN I: INFORMACIÓN BASE GENERAL (COMPARTIDA) */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div className="bg-(--color-app-card) border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
           <h3 className="text-xs font-black text-blue-500 uppercase tracking-widest flex items-center gap-2">
             <Home className="size-4" />
-            <span>I. Características Principales de la Oferta</span>
+            <span>I. Características Principales</span>
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             {/* COMBO DE ASIGNACIÓN CONTROLADO POR JERARQUÍA */}
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Agente / Concesión Responsable *
+                Agente / Responsable *
               </label>
               {rol !== "user" ? (
                 <select
                   required
                   value={agenteAsignadoId}
                   onChange={(e) => setAgenteAsignadoId(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                  className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
                 >
                   <option value="" disabled>
                     Seleccione el asesor
@@ -488,7 +485,7 @@ export default function RegistroPropiedad() {
                 required
                 value={tipoPropiedadId}
                 onChange={(e) => handleCambioTipo(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
               >
                 <option value="" disabled>
                   Seleccione el tipo
@@ -509,7 +506,7 @@ export default function RegistroPropiedad() {
                 type="text"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
                 placeholder="Ej: Cómodo Monoambiente Amoblado en Alquiler"
               />
             </div>
@@ -521,7 +518,7 @@ export default function RegistroPropiedad() {
                 required
                 value={modalidad}
                 onChange={(e) => setModalidad(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
               >
                 <option value="Venta">Venta Directa</option>
                 <option value="Alquiler">Alquiler Mensual</option>
@@ -538,7 +535,7 @@ export default function RegistroPropiedad() {
                 step="any"
                 value={precio}
                 onChange={(e) => setPrecio(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 font-mono"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 font-mono"
                 placeholder="0.00"
               />
             </div>
@@ -550,7 +547,7 @@ export default function RegistroPropiedad() {
                 required
                 value={moneda}
                 onChange={(e) => setMoneda(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
               >
                 <option value="USD">Dólares Americanos (USD)</option>
                 <option value="BOB">Bolivianos (BOB)</option>
@@ -566,7 +563,7 @@ export default function RegistroPropiedad() {
                 step="any"
                 value={superficieTotal}
                 onChange={(e) => setSuperficieTotal(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 font-mono"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 font-mono"
                 placeholder="0.00"
               />
             </div>
@@ -575,7 +572,7 @@ export default function RegistroPropiedad() {
                 DEPARTAMENTO (BOLIVIA)
               </label>
               <select
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500 cursor-pointer"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
                 name="departamento"
                 value={formData.departamento}
                 onChange={handleDepartamentoChange}
@@ -600,7 +597,7 @@ export default function RegistroPropiedad() {
                 type="text"
                 value={zona}
                 onChange={(e) => setZona(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
                 placeholder="Ej: San Pedro / Equipetrol"
               />
             </div>
@@ -614,7 +611,7 @@ export default function RegistroPropiedad() {
                 type="text"
                 value={direccion}
                 onChange={(e) => setDireccion(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2 px-3 text-zinc-200 focus:outline-hidden focus:border-blue-500"
+                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
                 placeholder="Ej: Calle Murillo Nro 420, entre Av. Illimani"
               />
             </div>

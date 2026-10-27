@@ -1,18 +1,58 @@
-
 @import "tailwindcss";
 @import "@fontsource/inter";
 
-@theme{
+@theme {
   --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Mapeamos los colores semánticos a variables CSS para que cambien dinámicamente */
+  --color-app-bg: var(--background);
+  --color-app-card: var(--card-bg);
+  --color-app-input: var(--input-bg);
+  --color-app-text: var(--text-main);
+  --color-app-text-muted: var(--text-muted);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-alert: var(--alert);
+  --color-darkmode: var(--darkmode);
+
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Light Theme (predeterminado) */ 
-:root{
-  --background: #f8fafc;
+/* ☀️ MODO CLARO (Predeterminado) */
+:root {
+  --background: #f8fafc;        /* Fondo general claro (slate-50) */
+  --card-bg: #f5f2f2;           /* Fondo para tarjetas y modales */
+  --input-bg: #ffffff;          /* Fondo para inputs y elementos interactivos */
+  --text-main: #0f172a;         /* Texto principal oscuro (slate-900) */
+  --text-muted: #64748b;        /* Texto secundario (slate-500) */
+
+  --primary: #2563eb;           /* Azul principal corporativo (blue-600) */
+  --primary-hover: #1d4ed8;     /* Azul más oscuro al pasar el cursor */
+
+  --success: #16a34a;           /* Verde para éxito/disponible (green-600) */
+  --warning: #ca8a04;           /* Amarillo/Ámbar para avisos (amber-600) */
+  --alert: #dc2626;             /* Rojo para alertas/errores (red-600) */
+   --darkmode: #2563eb;          /* Naranja para el icono de sol en cambio de thema*/
 }
 
-.dark{
-  --background: #181616;
+/* 🌙 MODO OSCURO */
+.dark {
+  --background: #121212;        /* Fondo general oscuro que ya usas */
+  --card-bg: #1a1a1a;           /* Fondo para tarjetas oscuras */
+  --input-bg: #2d2d2d;          /* Fondo para inputs y elementos interactivos */
+  --text-main: #f4f4f5;         /* Texto principal claro (zinc-100) */
+  --text-muted: #a1a1aa;        /* Texto secundario (zinc-400) */
+
+  --primary: #3b82f6;           /* Azul más brillante para modo oscuro (blue-500) */
+  --primary-hover: #2563eb;     
+
+  --success: #22c55e;           /* Verde brillante (green-500) */
+  --warning: #eab308;           /* Amarillo brillante (yellow-500) */
+  --alert: #ef4444;             /* Rojo brillante (red-500) */
+  --darkmode:#fb8212;           /* Naranja para el icono de la luna en cambio de thema*/
 }

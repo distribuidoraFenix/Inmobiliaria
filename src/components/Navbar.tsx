@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { useTheme } from "../context/ThemeContext";
 import {
   Menu,
   Bell,
@@ -11,10 +12,8 @@ import {
   Settings,
   Key,
   Check,
-  User,
-  Briefcase,
-  Plus,
   Home,
+  Sun,
 } from "lucide-react";
 
 interface EnlaceNavegacion {
@@ -89,6 +88,7 @@ const itemsMenuLateral: EnlaceNavegacion[] = [
 ];
 
 export default function Navbar() {
+  const { theme, toggleTheme } = useTheme();
   const { logout, rol, user } = useAuth();
 
   // Estados para controlar el despliegue de menús
@@ -181,7 +181,7 @@ export default function Navbar() {
     ? avatarUrl
     : "https://ltivmoqjhoxfmlbplkee.supabase.co/storage/v1/object/public/avatares/usuario.webp";
   return (
-    <nav className="sticky top-0 z-50 w-full bg-zinc-900 border-b border-zinc-800 text-white select-none">
+    <nav className="sticky top-0 z-50 w-full  border-b border-zinc-800 bg-white dark:bg-zinc-950 text-(--color-primary) select-none">
       <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
         {/* SECCIÓN IZQUIERDA: Menú Hamburguesa */}
         <div className="flex items-center">
@@ -202,7 +202,7 @@ export default function Navbar() {
         <div className="flex items-center justify-center">
           <Link
             to="/"
-            className="p-2 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-zinc-800 transition-all transform active:scale-95 cursor-pointer"
+            className="p-2 rounded-lg text-(--color-primary) hover:text-blue-300 hover:bg-zinc-800 transition-all transform active:scale-95 cursor-pointer"
           >
             <Home className="w-6 h-6" />
           </Link>
@@ -219,7 +219,7 @@ export default function Navbar() {
               className={`p-2 rounded-lg transition-colors relative cursor-pointer ${
                 isBellDropdownOpen
                   ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  : "text-(--color-primary) hover:text-white hover:bg-zinc-800"
               }`}
               aria-label="Ver notificaciones"
             >
@@ -291,8 +291,12 @@ export default function Navbar() {
             )}
           </div>
 
-          <button className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer">
-            <Moon className="w-5 h-5" />
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-(--color-darkmode)  hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+            title="Cambiar modo claro/oscuro"
+          >
+            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
           {/* Menú Dropdown de Perfil de Usuario */}

@@ -12,8 +12,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
 import ListaAgentes from "./components/ListaAgentes";
 import ListaPropiedades from "./components/ListaPropiedades";
-import RegistroPropiedad from "./components/RegistrarPropiedad";
 import { APIProvider } from "@vis.gl/react-google-maps";
+import RegistroPropiedad from "./components/RegistrarPropiedad";
 
 // Componente del Catálogo Principal Conectado a Supabase
 function HomeCatalog() {
