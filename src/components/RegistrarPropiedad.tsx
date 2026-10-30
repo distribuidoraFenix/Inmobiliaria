@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import SeccionInformacionBase from "./SeccionInformacionBase";
 import {
   Home,
   Navigation,
@@ -19,7 +20,7 @@ import { Map as GoogleMap, AdvancedMarker } from "@vis.gl/react-google-maps";
 
 export default function RegistroPropiedad() {
   const [formData, setFormData] = React.useState({
-    departamento: "Santa Cruz",
+    departamento: "La Paz",
     zona: "",
     direccion: "",
     superficie_total: 0,
@@ -56,10 +57,10 @@ export default function RegistroPropiedad() {
   const [tipoPropiedadId, setTipoPropiedadId] = useState<string>("");
   const [tipoPropiedadNombre, setTipoPropiedadNombre] = useState<string>("");
   const [titulo, setTitulo] = useState<string>("");
-  const [modalidad, setModalidad] = useState<string>("Venta");
+  const [modalidad, setModalidad] = useState<string>("Alquiler");
   const [precio, setPrecio] = useState<string>("");
   const [moneda, setMoneda] = useState<string>("USD");
-  const [departamento, setDepartamento] = useState<string>("Santa Cruz");
+  const [departamento, setDepartamento] = useState<string>("La Paz");
   const [zona, setZona] = useState<string>("");
   const [direccion, setDireccion] = useState<string>("");
   const [superficieTotal, setSuperficieTotal] = useState<string>("");
@@ -67,6 +68,7 @@ export default function RegistroPropiedad() {
   // Coordenadas geográficas manejadas automáticamente por el Pin de Google Maps
   const [latitud, setLatitud] = useState<number>(-17.7833); // Centro predictivo Bolivia (Santa Cruz base)
   const [longitud, setLongitud] = useState<number>(-63.1833);
+  const [codigoPropiedad, setCodigoPropiedad] = useState<string>("");
 
   // =========================================================================
   // 📊 ESTADOS - SECCIÓN II: EXPEDIENTE DE CONTROL LEGAL E IMPUESTOS
@@ -130,6 +132,48 @@ export default function RegistroPropiedad() {
     Beni: { lat: -14.8333, lng: -64.9 },
     Pando: { lat: -11.0267, lng: -68.7692 },
   };
+
+  // Función para generar automáticamente el código de propiedad basado en el agente seleccionado
+  const generarCodigoPropiedad = async (agenteId: string) => {
+    if (!agenteId) return;
+
+    try {
+      // 1. Obtener el código/prefijo del agente desde la tabla 'perfiles'
+      const { data: perfilAgente, error: errPerfil } = await supabase
+        .from("perfiles")
+        .select("codigo")
+        .eq("id", agenteId)
+        .single();
+
+      if (errPerfil) throw errPerfil;
+      const prefijo = perfilAgente?.codigo || "PROP";
+
+      // 2. Contar cuántas propiedades tiene registradas este agente en la tabla 'propiedades'
+      const { count, error: errCount } = await supabase
+        .from("propiedades")
+        .select("*", { count: "exact", head: true })
+        .eq("agente_id", agenteId);
+
+      if (errCount) throw errCount;
+
+      // 3. El siguiente número secuencial es el conteo actual + 1
+      const siguienteNumero = (count || 0) + 1;
+
+      // 4. Combinar en el formato deseado (Ej: DEV-2)
+      const codigoGenerado = `${prefijo}-${siguienteNumero}`;
+      setCodigoPropiedad(codigoGenerado);
+    } catch (error) {
+      console.error("Error al generar el código de propiedad:", error);
+      setCodigoPropiedad("");
+    }
+  };
+
+  // Efecto para calcular el código cuando cambie el agente asignado
+  useEffect(() => {
+    if (agenteAsignadoId) {
+      generarCodigoPropiedad(agenteAsignadoId);
+    }
+  }, [agenteAsignadoId]);
 
   // Función para manejar el cambio de departamento en tu formulario
   const handleDepartamentoChange = (
@@ -302,6 +346,7 @@ export default function RegistroPropiedad() {
         .insert({
           tipo_propiedad_id: Number(tipoPropiedadId),
           agente_id: idAgenteFinal,
+          codigo_propiedad: codigoPropiedad,
           titulo,
           modalidad,
           precio: Number(precio),
@@ -440,267 +485,42 @@ export default function RegistroPropiedad() {
         </div>
       )}
 
+      {/* FORMULARIO DE REGISTRO */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* SECCIÓN I: INFORMACIÓN BASE GENERAL (COMPARTIDA) */}
-        <div className="bg-(--color-app-card) border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
-          <h3 className="text-xs font-black text-blue-500 uppercase tracking-widest flex items-center gap-2">
-            <Home className="size-4" />
-            <span>I. Características Principales</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-            {/* COMBO DE ASIGNACIÓN CONTROLADO POR JERARQUÍA */}
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Agente / Responsable *
-              </label>
-              {rol !== "user" ? (
-                <select
-                  required
-                  value={agenteAsignadoId}
-                  onChange={(e) => setAgenteAsignadoId(e.target.value)}
-                  className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
-                >
-                  <option value="" disabled>
-                    Seleccione el asesor
-                  </option>
-                  {listaAgentes.map((ag) => (
-                    <option key={ag.id} value={ag.id}>
-                      {ag.nombres} {ag.apellido_paterno} ({ag.rol})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="w-full bg-zinc-950/60 border border-zinc-900 rounded-xl py-2 px-3 text-zinc-400 font-bold select-none cursor-not-allowed">
-                  {user?.user_metadata?.nombres || "Mi Cuenta"}{" "}
-                  {user?.user_metadata?.apellido_paterno || ""}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Clasificación de Inmueble
-              </label>
-              <select
-                required
-                value={tipoPropiedadId}
-                onChange={(e) => handleCambioTipo(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
-              >
-                <option value="" disabled>
-                  Seleccione el tipo
-                </option>
-                {tiposPropiedad.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre_tipo}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Título Publicitario del Anuncio
-              </label>
-              <input
-                required
-                type="text"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
-                placeholder="Ej: Cómodo Monoambiente Amoblado en Alquiler"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Modalidad
-              </label>
-              <select
-                required
-                value={modalidad}
-                onChange={(e) => setModalidad(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
-              >
-                <option value="Venta">Venta Directa</option>
-                <option value="Alquiler">Alquiler Mensual</option>
-                <option value="Anticretico">Anticrético</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Precio de Operación
-              </label>
-              <input
-                required
-                type="number"
-                step="any"
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 font-mono"
-                placeholder="0.00"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Moneda Base
-              </label>
-              <select
-                required
-                value={moneda}
-                onChange={(e) => setMoneda(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
-              >
-                <option value="USD">Dólares Americanos (USD)</option>
-                <option value="BOB">Bolivianos (BOB)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Superficie Total (m²)
-              </label>
-              <input
-                required
-                type="number"
-                step="any"
-                value={superficieTotal}
-                onChange={(e) => setSuperficieTotal(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 font-mono"
-                placeholder="0.00"
-              />
-            </div>
-            <div className="campo-grupo">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                DEPARTAMENTO (BOLIVIA)
-              </label>
-              <select
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500 cursor-pointer"
-                name="departamento"
-                value={formData.departamento}
-                onChange={handleDepartamentoChange}
-              >
-                <option value="La Paz">La Paz</option>
-                <option value="Santa Cruz">Santa Cruz</option>
-                <option value="Cochabamba">Cochabamba</option>
-                <option value="Tarija">Tarija</option>
-                <option value="Oruro">Oruro</option>
-                <option value="Potosí">Potosí</option>
-                <option value="Chuquisaca">Chuquisaca</option>
-                <option value="Beni">Beni</option>
-                <option value="Pando">Pando</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Zona / Barrio
-              </label>
-              <input
-                required
-                type="text"
-                value={zona}
-                onChange={(e) => setZona(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
-                placeholder="Ej: San Pedro / Equipetrol"
-              />
-            </div>
-
-            <div className="sm:col-span-3">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                Dirección Exacta Escrita
-              </label>
-              <input
-                required
-                type="text"
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                className="w-full bg-(--color-app-input) border border-zinc-800 rounded-md py-2 px-3 text-(--color-app-text) focus:outline-hidden focus:border-blue-500"
-                placeholder="Ej: Calle Murillo Nro 420, entre Av. Illimani"
-              />
-            </div>
-          </div>
-
-          {/* 🌟 INTEGRACIÓN DE LA API MAPA INTERACTIVO CON PIN ARRASTRABLE */}
-          <div className="mt-4">
-            <label className=" text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Navigation className="size-3.5 text-blue-500" />
-              <span>
-                Geolocalización Inmobiliaria (Arrastra el Pin sobre el inmueble)
-              </span>
-            </label>
-
-            <div className="w-full h-64 rounded-xl border border-zinc-800 overflow-hidden relative bg-zinc-950">
-              <GoogleMap
-                defaultZoom={14}
-                defaultCenter={{ lat: latitud, lng: longitud }}
-                center={{ lat: latitud, lng: longitud }}
-                gestureHandling="cooperative"
-                style={{ width: "100%", height: "100%" }}
-                mapId="DEMO_MAP_ID" // 👈 REQUISITO: Google Maps exige un mapId para los marcadores avanzados (puedes usar este por defecto)
-              >
-                {/* 🌟 CAMBIADO: Usamos AdvancedMarker en lugar de Marker clásico */}
-                <AdvancedMarker
-                  position={{ lat: latitud, lng: longitud }}
-                  draggable={true}
-                  onDragEnd={(e) => {
-                    if (e.latLng) {
-                      setLatitud(e.latLng.lat());
-                      setLongitud(e.latLng.lng());
-                    }
-                  }}
-                />
-              </GoogleMap>
-            </div>
-            <div className="flex items-center gap-4 mt-2 font-mono text-[10px] text-zinc-500 px-1">
-              <span>
-                Lat: <span className="text-zinc-400">{latitud.toFixed(6)}</span>
-              </span>
-              <span>
-                Lng:{" "}
-                <span className="text-zinc-400">{longitud.toFixed(6)}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* 🌟 NUEVA ZONA MULTIMEDIA CORPORATIVA DE ALTA VISIBILIDAD */}
-          <div className="mt-4">
-            <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">
-              Galería Fotográfica (Obligatorio: Mínimo 1, Máximo 5 imágenes)
-            </label>
-            <label
-              className={`flex flex-col items-center justify-center w-full h-24 border border-dashed rounded-xl cursor-pointer transition-colors p-3 text-center ${
-                errorMultimedia
-                  ? "border-rose-500/50 bg-rose-500/5"
-                  : "border-zinc-800 hover:border-zinc-700 bg-zinc-950/40"
-              }`}
-            >
-              <div className="flex flex-col items-center justify-center">
-                <p
-                  className={`text-[11px] font-black ${archivosFotos.length > 0 ? "text-blue-400" : "text-zinc-300"}`}
-                >
-                  {archivosFotos.length > 0
-                    ? `¡${archivosFotos.length} de 5 fotografías cargadas con éxito en caché!`
-                    : "Haga clic aquí para seleccionar los archivos"}
-                </p>
-                <p className="text-[9px] text-zinc-500 mt-0.5">
-                  Soporta cargas múltiples simultáneas en formatos estándar
-                  (JPG, PNG)
-                </p>
-              </div>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                onChange={handleSeleccionImagenes}
-              />
-            </label>
-
-            {/* Alerta de validación en tiempo real */}
-            {errorMultimedia && (
-              <p className="text-[10px] font-bold text-rose-400 mt-1.5 flex items-center gap-1 animate-fade-in">
-                <span>⚠ {errorMultimedia}</span>
-              </p>
-            )}
-          </div>
-        </div>
+        <SeccionInformacionBase
+          rol={rol}
+          user={user}
+          agenteAsignadoId={agenteAsignadoId}
+          setAgenteAsignadoId={setAgenteAsignadoId}
+          listaAgentes={listaAgentes}
+          titulo={titulo}
+          codigoPropiedad={codigoPropiedad}
+          setTitulo={setTitulo}
+          tipoPropiedadId={tipoPropiedadId}
+          handleCambioTipo={handleCambioTipo}
+          tiposPropiedad={tiposPropiedad}
+          modalidad={modalidad}
+          setModalidad={setModalidad}
+          superficieTotal={superficieTotal}
+          setSuperficieTotal={setSuperficieTotal}
+          precio={precio}
+          setPrecio={setPrecio}
+          moneda={moneda}
+          setMoneda={setMoneda}
+          departamento={departamento}
+          handleDepartamentoChange={handleDepartamentoChange}
+          zona={zona}
+          setZona={setZona}
+          direccion={direccion}
+          setDireccion={setDireccion}
+          latitud={latitud}
+          longitud={longitud}
+          setLatitud={setLatitud}
+          setLongitud={setLongitud}
+          archivosFotos={archivosFotos}
+          errorMultimedia={errorMultimedia}
+          handleSeleccionImagenes={handleSeleccionImagenes}
+        />
         {/* SECCIÓN II: EXPEDIENTE DE CONTROL LEGAL E IMPUESTOS (CONFIDENCIAL) */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-4 shadow-xl">
           <h3 className="text-xs font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
@@ -710,7 +530,7 @@ export default function RegistroPropiedad() {
             </span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
             <div>
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
                 Nro. Matrícula / Folio Real
