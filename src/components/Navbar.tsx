@@ -89,7 +89,8 @@ const itemsMenuLateral: EnlaceNavegacion[] = [
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
-  const { logout, rol, user } = useAuth();
+  const { rol, user } = useAuth();
+  const { signOut } = useAuth();
 
   // Estados para controlar el despliegue de menús
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -162,15 +163,6 @@ export default function Navbar() {
       });
     } catch (err) {
       console.error("Error al actualizar la notificación individual:", err);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      setIsUserDropdownOpen(false);
-      await logout();
-    } catch (error) {
-      console.error("Error al intentar cerrar sesión:", error);
     }
   };
 
@@ -344,10 +336,13 @@ export default function Navbar() {
                   </a>
                   <hr className="border-zinc-700 my-1" />
                   <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-rose-400 hover:bg-zinc-700/50 transition-colors text-left cursor-pointer"
+                    onClick={async () => {
+                      setIsUserDropdownOpen(false); // Cierra el menú desplegable
+                      await signOut(); // Ejecuta el cierre de sesión global del AuthContext
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-zinc-700/50 transition-colors cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4 text-red-500" />
                     <span>Cerrar Sesión</span>
                   </button>
                 </div>
