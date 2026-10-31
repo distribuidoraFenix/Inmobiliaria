@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { supabase } from "./lib/supabaseClient";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/navigation/Navbar";
 import PropertyCard from "./components/PropertyCard";
 import PropertyDetail from "./components/PropertyDetail";
 import MiPerfil from "./components/MiPerfil";
@@ -72,7 +72,7 @@ function HomeCatalog() {
 
     obtenerPropiedades();
   }, []);
-  
+
   useEffect(() => {
     async function actualizarIdentidadNavegador() {
       try {
