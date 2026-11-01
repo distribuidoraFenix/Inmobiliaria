@@ -81,11 +81,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        return { success: false, error: error.message };
+        // Diccionario para traducir los errores comunes de Supabase Auth
+        const errorTranslations: Record<string, string> = {
+          "Invalid login credentials":
+            "El correo electrónico o la contraseña son incorrectos.",
+          "Email not confirmed":
+            "Por favor, confirma tu correo electrónico antes de iniciar sesión.",
+          "User not found":
+            "No existe ningún usuario registrado con este correo.",
+          "Invalid email or password":
+            "El correo electrónico o la contraseña son incorrectos.",
+        };
+
+        // Si el error existe en el diccionario, lo traduce; si no, muestra uno genérico amigable
+        const translatedMessage =
+          errorTranslations[error.message] ||
+          "Ocurrió un error al intentar iniciar sesión. Por favor, intenta de nuevo.";
+
+        return { success: false, error: translatedMessage };
       }
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || "Error desconocido" };
+      return {
+        success: false,
+        error: "Error de conexión o problema desconocido.",
+      };
     }
   };
 
