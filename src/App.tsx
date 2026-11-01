@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabaseClient";
 import Navbar from "./components/navigation/Navbar";
 import PropertyCard from "./components/PropertyCard";
@@ -7,7 +7,7 @@ import PropertyDetail from "./components/PropertyDetail";
 import MiPerfil from "./components/MiPerfil";
 import RegistrarAgente from "./components/RegistrarAgente";
 import RutaAdmin from "./components/RutaAdmin";
-import { LoginForm } from "./components/auth/LoginForm"; // Usamos nuestro nuevo login adaptado
+import { LoginForm } from "./components/auth/LoginForm";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Loader2 } from "lucide-react";
 import ListaAgentes from "./components/ListaAgentes";
@@ -83,12 +83,10 @@ function HomeCatalog() {
           .single();
 
         if (!error && data) {
-          // 1. Cambiar dinámicamente el título de la pestaña del navegador
           if (data.nombre_empresa) {
             document.title = data.nombre_empresa;
           }
 
-          // 2. Cambiar dinámicamente el favicon (icono de la pestaña)
           if (data.icono_url) {
             let link: HTMLLinkElement | null =
               document.querySelector("link[rel*='icon']");
@@ -144,6 +142,23 @@ function HomeCatalog() {
   );
 }
 
+// Componentes temporales para las nuevas pantallas
+function DashboardAdmin() {
+  return (
+    <div className="p-8 text-sm font-bold">
+      Panel de Control de Administrador (Dashboard)
+    </div>
+  );
+}
+
+function VistaPropiedadesUser() {
+  return (
+    <div className="p-8 text-sm font-bold">
+      Sección de Propiedades para Usuarios
+    </div>
+  );
+}
+
 // Contenedor de la estructura interna y enrutador controlado
 function AppContenido() {
   const { user, loading } = useAuth();
@@ -156,22 +171,73 @@ function AppContenido() {
     );
   }
 
-  // Si no hay usuario autenticado, mostramos nuestro nuevo LoginForm con los modales
-  if (!user) {
-    return <LoginForm />;
-  }
-
   return (
     <div className="min-h-screen bg-(--color-app-bg) text-(--color-app-text) transition-colors duration-300">
-      <Navbar />
+      {/* Solo se muestra la barra de navegación si el usuario está autenticado */}
+      {user && <Navbar />}
+
       <Routes>
-        <Route path="/" element={<HomeCatalog />} />
-        <Route path="/propiedad/:id" element={<PropertyDetail />} />
-        <Route path="/perfil" element={<MiPerfil />} />
-        <Route path="/lista-agentes" element={<ListaAgentes />} />
-        <Route path="/lista-propiedades" element={<ListaPropiedades />} />
-        <Route path="/registrar-propiedad" element={<RegistroPropiedad />} />
-        <Route path="/test-messages" element={<TestMessageView />} />
+        {/* 🔥 CAMBIO AQUÍ: Ahora /login renderiza el LoginForm SIEMPRE, sin importar si user existe temporalmente */}
+        <Route path="/login" element={<LoginForm />} />
+
+        {/* Si no está logueado, va directo a /login */}
+        <Route
+          path="/"
+          element={user ? <HomeCatalog /> : <Navigate to="/login" replace />}
+        />
+
+        {/* Tus Destinaciones del Login */}
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <RutaAdmin>
+                <DashboardAdmin />
+              </RutaAdmin>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/propiedades"
+          element={
+            user ? <VistaPropiedadesUser /> : <Navigate to="/login" replace />
+          }
+        />
+
+        {/* Rutas Protegidas Generales */}
+        <Route
+          path="/propiedad/:id"
+          element={user ? <PropertyDetail /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/perfil"
+          element={user ? <MiPerfil /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/lista-agentes"
+          element={user ? <ListaAgentes /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/lista-propiedades"
+          element={
+            user ? <ListaPropiedades /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/registrar-propiedad"
+          element={
+            user ? <RegistroPropiedad /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/test-messages"
+          element={
+            user ? <TestMessageView /> : <Navigate to="/login" replace />
+          }
+        />
+
         <Route
           path="/registrar-agente"
           element={

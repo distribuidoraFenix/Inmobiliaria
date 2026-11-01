@@ -16,7 +16,5 @@
 ## MODULO login
 * Se modifico el mensaje de error de ingles a español
 * Se reviso el archivo RutaAdmin => para no usarlo para un login mas claro y poder controlara la redireccion de las rutas...
-* 
-
-## BASE DE DATOS
-* 
+* Se modifico el archivo principal app => evita que nos direccione directamente y permite revisar el tipo de usuario para realizar la redireccion corresponiente
+* Se modifico el formulario de login => se añadio un settimeout para lograr que se vea el mensaje de bienvenida

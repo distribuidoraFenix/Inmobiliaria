@@ -3,9 +3,12 @@ import { useAuth } from "../../context/AuthContext";
 import { AlertMessage } from "../message/AlertMessage";
 import { supabase } from "../../lib/supabaseClient";
 import { Lock, Mail, ArrowRight, Eye, EyeOff, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function LoginForm() {
-  const { signIn } = useAuth();
+  const { signIn, rol } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -42,6 +45,22 @@ export function LoginForm() {
     fetchConfiguracion();
   }, []);
 
+  // 🔥 Efecto centinela: Escucha cuándo el rol cambia y está cargado
+  useEffect(() => {
+    if (modalState === "success_loader" && rol !== null) {
+      // Dejamos un pequeño margen de tiempo por si la alerta necesita terminar su animación
+      const timer = setTimeout(() => {
+        if (rol === "admin") {
+          navigate("/dashboard", { replace: true });
+        } else {
+          navigate("/propiedades", { replace: true });
+        }
+      }, 2000); // 2 segundos para apreciar el mensaje
+
+      return () => clearTimeout(timer);
+    }
+  }, [modalState, rol, navigate]);
+
   // Submit para el envio de las credenciales
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +71,9 @@ export function LoginForm() {
     setIsLoading(false);
 
     if (result.success) {
+      // Primero activamos la alerta visual de éxito
       setModalState("success_loader");
+      // La navegación ahora la maneja el useEffect de arriba en cuanto detecte el rol
     } else {
       setErrorMessage(result.error || "Credenciales inválidas.");
       setModalState("error");
