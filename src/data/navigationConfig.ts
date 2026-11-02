@@ -47,7 +47,7 @@ export const menuSecciones: SeccionMenu[] = [
      color: "text-(--color-success)",
     soloAdmin: false,
     enlaces: [
-      { label: "Propiedades Destacadas", to: "/propiedades", soloAdmin: true },
+      { label: "Catálogo", to: "/propiedades", soloAdmin: true },
       { label: "Registrar Propiedad", to: "/registrar-propiedad", soloAdmin: false },
       { label: "Lista de propiedades", to: "/lista-propiedades", soloAdmin: true },
     ],
