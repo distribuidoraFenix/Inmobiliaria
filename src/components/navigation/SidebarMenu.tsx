@@ -10,6 +10,8 @@ import {
   Home,
   FolderKanban,
   Settings,
+  DollarSign,
+  Calendar,
 } from "lucide-react";
 import { menuSecciones } from "../../data/navigationConfig";
 
@@ -56,6 +58,10 @@ export function SidebarMenu({
         return <FolderKanban className="w-4 h-4 text-cyan-400 shrink-0" />;
       case "configuración":
         return <Settings className="w-4 h-4 text-indigo-400 shrink-0" />;
+      case "finanzas":
+        return <DollarSign className="w-4 h-4 text-green-400 shrink-0" />;
+      case "agenda":
+        return <Calendar className="w-4 h-4 text-orange-400 shrink-0" />;
       default:
         return <Building2 className="w-4 h-4 text-zinc-400 shrink-0" />;
     }

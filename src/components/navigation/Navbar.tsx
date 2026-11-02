@@ -78,7 +78,13 @@ export default function Navbar() {
         {/* SECCIÓN CENTRAL: Logo dinámico de Supabase para ir al Home */}
         <div className="flex items-center justify-center">
           <Link
-            to="/"
+            to={
+              rol === "admin"
+                ? "/dashboard"
+                : rol === "user"
+                  ? "/propiedades"
+                  : "/"
+            }
             className="p-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all transform active:scale-95 cursor-pointer flex items-center gap-2"
             title="Ir al inicio"
           >

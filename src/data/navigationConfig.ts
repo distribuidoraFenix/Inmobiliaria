@@ -47,6 +47,7 @@ export const menuSecciones: SeccionMenu[] = [
      color: "text-(--color-success)",
     soloAdmin: false,
     enlaces: [
+      { label: "Propiedades Destacadas", to: "/propiedades", soloAdmin: true },
       { label: "Registrar Propiedad", to: "/registrar-propiedad", soloAdmin: false },
       { label: "Lista de propiedades", to: "/lista-propiedades", soloAdmin: true },
     ],
@@ -58,6 +59,24 @@ export const menuSecciones: SeccionMenu[] = [
     enlaces: [
       { label: "Registrar Proyecto", href: "#registrar-proyecto", soloAdmin: true },
       { label: "Lista de proyectos", href: "#listaproyectos", soloAdmin: true },
+    ],
+  },
+  {
+    label: "Finanzas",
+    color: "text-(--color-success)",
+    soloAdmin: true,
+    enlaces: [
+      { label: "Contratos", href: "#contratos", soloAdmin: true },
+      { label: "Operaciones", href: "#operaciones", soloAdmin: true },
+    ],
+  },
+  {
+    label: "Agenda",
+    color: "text-(--color-success)",
+    soloAdmin: false,
+    enlaces: [
+      { label: "Registrar cita", href: "#reistrar-citas", soloAdmin: false },
+      { label: "Ver Agenda", href: "#agentes", soloAdmin: false },
     ],
   },
   {
