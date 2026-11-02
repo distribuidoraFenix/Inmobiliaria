@@ -1,8 +1,12 @@
 // src/components/Dashboard.tsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldAlert, Users, Home, TrendingUp, Building2 } from "lucide-react";
+import { ShieldAlert, Building2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { ListCardInfo } from "./dashboard/ListCardInfo";
+import { RankingAgentes } from "./dashboard/RankingAgentes";
+import { RankingConsignaciones } from "./dashboard/RankingConsignaciones";
+import { GraficoProduccion } from "./dashboard/GraficoProduccion";
 
 export function Dashboard() {
   const { profile, loading } = useAuth();
@@ -56,53 +60,15 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Grid de Métricas o Accesos Rápidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-(--color-app-card) border border-zinc-700/40 p-5 rounded-2xl shadow-lg space-y-2">
-          <div className="flex items-center justify-between text-(--color-app-text-muted)">
-            <span className="text-xs font-bold uppercase tracking-wider">
-              Gestión de Agentes
-            </span>
-            <Users className="size-5 text-blue-400" />
-          </div>
-          <p className="text-lg font-bold text-(--color-app-text)">
-            Panel de Personal
-          </p>
-          <p className="text-[11px] text-(--color-app-text-muted)">
-            Administra cuentas y permisos corporativos.
-          </p>
-        </div>
-
-        <div className="bg-(--color-app-card) border border-zinc-700/40 p-5 rounded-2xl shadow-lg space-y-2">
-          <div className="flex items-center justify-between text-(--color-app-text-muted)">
-            <span className="text-xs font-bold uppercase tracking-wider">
-              Propiedades
-            </span>
-            <Home className="size-5 text-amber-400" />
-          </div>
-          <p className="text-lg font-bold text-(--color-app-text)">
-            Catálogo General
-          </p>
-          <p className="text-[11px] text-(--color-app-text-muted)">
-            Control de inmuebles y estados de disponibilidad.
-          </p>
-        </div>
-
-        <div className="bg-(--color-app-card) border border-zinc-700/40 p-5 rounded-2xl shadow-lg space-y-2">
-          <div className="flex items-center justify-between text-(--color-app-text-muted)">
-            <span className="text-xs font-bold uppercase tracking-wider">
-              Métricas
-            </span>
-            <TrendingUp className="size-5 text-emerald-400" />
-          </div>
-          <p className="text-lg font-bold text-(--color-app-text)">
-            Estadísticas
-          </p>
-          <p className="text-[11px] text-(--color-app-text-muted)">
-            Monitoreo de actividad de la empresa.
-          </p>
-        </div>
+      {/* Renderizado modular de tarjetas informativas y de acceso rápido */}
+      <ListCardInfo />
+      {/* Sección de Widgets en dos columnas para pantallas medianas/grandes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RankingAgentes />
+        <RankingConsignaciones />
       </div>
+      {/* Sección grafico */}
+      <GraficoProduccion />
     </div>
   );
 }
