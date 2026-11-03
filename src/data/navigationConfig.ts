@@ -29,8 +29,8 @@ export const menuSecciones: SeccionMenu[] = [
     color: "text-(--color-success)",
     soloAdmin: true,
     enlaces: [
-      { label: "Registrar Sucursal", href: "#registrar-sucursal", soloAdmin: true },
-      { label: "Lista de Sucursales", href: "#lista-sucursales", soloAdmin: true },
+      { label: "Registrar Sucursal", href: "registrar-sucursal", soloAdmin: true },
+      { label: "Lista de Sucursales", href: "lista-sucursales", soloAdmin: true },
     ],
   },
   {
