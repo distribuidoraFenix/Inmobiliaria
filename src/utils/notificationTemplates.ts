@@ -48,4 +48,5 @@ export const notificationTemplates = {
     mensaje: descripcion,
     tipo: "sistema",
   }),
+
 };

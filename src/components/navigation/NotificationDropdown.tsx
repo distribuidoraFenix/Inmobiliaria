@@ -43,16 +43,17 @@ export function NotificationDropdown({
       );
     }
   };
-
   useEffect(() => {
     if (!userId) return;
+
+    const currentUserId = String(userId).trim();
 
     async function cargarNotificacionesIniciales() {
       try {
         const { data, error } = await supabase
           .from("notificaciones")
           .select("*")
-          .eq("perfil_id", userId)
+          .eq("perfil_id", currentUserId)
           .order("created_at", { ascending: false })
           .limit(10);
 
@@ -66,28 +67,38 @@ export function NotificationDropdown({
 
     cargarNotificacionesIniciales();
 
-    // 🔴 SUSCRIPCIÓN EN TIEMPO REAL (Supabase Realtime)
+    // 🔴 SUSCRIPCIÓN EN TIEMPO REAL ROBUSTA
+    const channelName = `notificaciones-perfil-${currentUserId}-${Date.now()}`;
     const channel = supabase
-      .channel(`notificaciones-perfil-${userId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notificaciones",
-          filter: `perfil_id=eq.${userId}`,
         },
         (payload) => {
-          const nuevaNotificacion = payload.new;
+          const nuevaNotificacion = payload.new as any;
+          const destinoId = String(nuevaNotificacion?.perfil_id || "").trim();
 
-          // 🔊 ¡Aquí es donde suena al instante cuando entra una nueva alerta!
-          reproducirSonidoAlerta();
+          // Verificar si la notificación es para este usuario exacto
+          if (destinoId === currentUserId) {
+            // 🔊 ¡Reproducir sonido y actualizar estado al instante!
+            reproducirSonidoAlerta();
 
-          setNotificaciones((prev) => [nuevaNotificacion, ...prev]);
-          setTieneNuevas(true);
+            setNotificaciones((prev) => {
+              // Evitar duplicados si ya existe
+              if (prev.some((n) => n.id === nuevaNotificacion.id)) return prev;
+              return [nuevaNotificacion, ...prev];
+            });
+            setTieneNuevas(true);
+          }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Estado del canal Realtime [${currentUserId}]:`, status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -120,6 +131,8 @@ export function NotificationDropdown({
     switch (tipo) {
       case "propiedad":
         return <Building2 className="size-4 text-emerald-400 shrink-0" />;
+      case "sucursal":
+        return <Building2 className="size-4 text-blue-400 shrink-0" />;
       case "agente":
         return <UserPlus className="size-4 text-blue-400 shrink-0" />;
       case "estado":

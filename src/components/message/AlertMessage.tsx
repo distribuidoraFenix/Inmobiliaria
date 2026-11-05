@@ -95,15 +95,11 @@ export function AlertMessage({
           </button>
         )}
 
-        {type !== "success_loader" && (
+        {type !== "success_loader" && type !== "error" && (
           <button
             type="button"
             onClick={onConfirm || onClose}
-            className={`text-xs font-black px-5 py-2 rounded-xl transition-all cursor-pointer shadow-md ${
-              type === "error"
-                ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20"
-                : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20"
-            }`}
+            className="text-xs font-black px-5 py-2 rounded-xl transition-all cursor-pointer shadow-md bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20"
           >
             {confirmText}
           </button>

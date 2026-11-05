@@ -14,6 +14,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 import RegistroPropiedad from "./components/RegistrarPropiedad";
 import TestMessageView from "./components/message/TestMessageView";
 import ListaSucursales from "./components/sucursales/ListaSucursales";
+import RegistrarSucursal from "./components/sucursales/RegistrarSucursal";
 
 // Importaciones de tus componentes reales
 import { Dashboard } from "./components/Dashboard";
@@ -130,6 +131,7 @@ function AppContenido() {
           }
         />
         <Route path="/Lista-sucursales" element={<ListaSucursales />} />
+        <Route path="/registrar-sucursal" element={<RegistrarSucursal />} />
 
         <Route
           path="/registrar-agente"
