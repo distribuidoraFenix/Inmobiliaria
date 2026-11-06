@@ -28,19 +28,18 @@ export function SidebarMenu({
   rol,
   nombreEmpresa,
 }: SidebarMenuProps) {
-  const [seccionesAbiertas, setSeccionesAbiertas] = useState<
-    Record<string, boolean>
-  >({
-    Propiedades: true,
-  });
+  // 1. Cambiamos el estado para guardar únicamente el label de la sección activa (o null si ninguna lo está)
+  // Iniciamos con "Propiedades" abierta por defecto, tal como lo tenías.
+  const [seccionAbierta, setSeccionAbierta] = useState<string | null>(
+    "Propiedades",
+  );
 
   if (!isOpen) return null;
 
   const toggleSeccion = (label: string) => {
-    setSeccionesAbiertas((prev) => ({
-      ...prev,
-      [label]: !prev[label],
-    }));
+    // Si la sección ya está abierta, al hacer clic la cerramos (null).
+    // Si es otra, la abrimos y automáticamente las demás se cierran.
+    setSeccionAbierta((prev) => (prev === label ? null : label));
   };
 
   // Función para retornar el icono correspondiente según la sección
@@ -84,7 +83,7 @@ export function SidebarMenu({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 cursor-pointer transition-colors shrink-0"
+            className="p-1 rounded-md text-(--color-primary) hover:text-(--color-alert) hover:bg-zinc-800 cursor-pointer transition-colors shrink-0"
             aria-label="Cerrar menú"
           >
             <X className="w-4 h-4" />
@@ -96,7 +95,8 @@ export function SidebarMenu({
           {menuSecciones.map((seccion, index) => {
             if (seccion.soloAdmin && rol !== "admin") return null;
 
-            const estaAbierta = !!seccionesAbiertas[seccion.label];
+            // 2. Comparamos directamente si este item coincide con la sección activa
+            const estaAbierta = seccionAbierta === seccion.label;
 
             return (
               <div key={index} className="border-b border-zinc-900/80 pb-1">
@@ -112,7 +112,7 @@ export function SidebarMenu({
                     </span>
                   </div>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-zinc-500 transition-transform duration-200 shrink-0 ${
+                    className={`w-3.5 h-3.5 text-green-400 transition-transform duration-200 shrink-0 ${
                       estaAbierta ? "transform rotate-180" : ""
                     }`}
                   />
